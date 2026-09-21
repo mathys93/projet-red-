@@ -1,8 +1,8 @@
 package main
 
 func type Character struct {
-    goku      string
-    sayan    string
+          string
+    joestar    string
     Level 1    int
     MaxHP     int
     CurrentHP 100  int
