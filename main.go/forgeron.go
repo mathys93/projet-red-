@@ -1,3 +1,9 @@
+package main
+
+import (
+	"fmt"
+)
+
 # Inventaire du joueur
 joueur = {
     "Fragment": 10,          # fragments disponibles
