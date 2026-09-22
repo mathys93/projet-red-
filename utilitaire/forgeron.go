@@ -78,21 +78,12 @@ func Fabriquer(c *character.Character, item string) {
 
 	for ressource, quantite := range forgeronRessources[item] {
 		for i := 0; i < quantite; i++ {
-<<<<<<< HEAD
-			removeInventory(ressource)
-		}
-	}
-
-	c.Fragments -= forgeronObjets[item]
-	addInventory(item)
-=======
 			c.RemoveItem(ressource)
 		}
 	}
 
 	c.Fragment -= forgeronObjets[item]
 	c.AddItem(item)
->>>>>>> 405df67e48e273889fed1336da44d1d9a1855988
 	fmt.Printf("Tu as fabriqué %s !\n", item)
 	fmt.Printf("Fragments restants : %d\n", c.Fragments)
 	fmt.Printf("Inventaire du joueur : %v\n", c.Inventory)
