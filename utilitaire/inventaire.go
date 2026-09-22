@@ -8,7 +8,7 @@
 // jamais compilé), et forgeron.go référençait un champ c.Fragment qui
 // n'existait sur aucune d'elles : le paquet ne compilait pas. Tout utilise
 // maintenant le seul et même character.Character (voir package character).
-package utilitaire
+package main
 
 import (
 	"fmt"

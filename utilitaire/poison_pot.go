@@ -9,7 +9,7 @@
 // aurait de toute façon provoqué des conflits avec le reste du paquet une
 // fois renommé en .go. Tout est maintenant réécrit avec le character.Character
 // partagé, sans func main() (ce n'est pas le rôle d'un paquet utilitaire).
-package utilitaire
+package main
 
 import (
 	"fmt"
