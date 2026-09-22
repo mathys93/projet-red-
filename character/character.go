@@ -25,6 +25,14 @@ type Character struct {
 	// poing, attaque de Stand...). Personnalise cette liste après New()
 	// pour donner des attaques propres à un personnage.
 	Moves []Move
+
+	// État posé par certains objets (ex: la Flèche, voir combat/arrow.go) et
+	// consommé pendant le combat en cours : le prochain tour du boss est
+	// annulé, le joueur est enraciné pendant N tours, ou une mort est
+	// annulée une fois.
+	SkipBossNextTurn  bool
+	StunnedTurns      int
+	HasResurrectCharm bool
 }
 
 // Move est une action de combat sélectionnable en FIGHT. Perform applique

@@ -48,14 +48,29 @@ func (DefaultPattern) ActOptions(self *Boss, player *character.Character) []ActO
 }
 
 // --- Zone 1 : DIO ---------------------------------------------------
-// TODO: pattern de DIO (Stand "The World" : arrêt du temps, rafale de
-// coups de poing "MUDA MUDA MUDA", esquive du joueur limitée pendant le
-// tour où le temps est arrêté, etc.)
+// Pattern de DIO (Stand "The World") : deux tours de mise en jambe, puis un
+// troisième tour où le temps s'arrête - un coup lourd qui ignore totalement
+// la Defense Power. Le deuxième tour sert de signal clair ("il prépare
+// quelque chose") : c'est le moment de se soigner avant l'impact plutôt que
+// de continuer à frapper aveuglément.
 type DioPattern struct{}
 
 func (p DioPattern) Act(turn int, self *Boss, player *character.Character) string {
-	// TODO: remplace par le vrai pattern de DIO.
-	return DefaultPattern{}.Act(turn, self, player)
+	switch turn % 3 {
+	case 1:
+		dmg := player.TakeDamage(self.AP)
+		return fmt.Sprintf("%s assène un coup de poing sec. %d dégâts.", self.Name, dmg)
+	case 2:
+		dmg := player.TakeDamage(self.AP)
+		return fmt.Sprintf("%s recule et sort sa montre à gousset. Tu sens que quelque chose se prépare... %d dégâts.", self.Name, dmg)
+	default:
+		raw := self.AP * 2
+		player.LP -= raw
+		if player.LP < 0 {
+			player.LP = 0
+		}
+		return fmt.Sprintf("\"ZA WARUDO ! TOKI YO TOMARE !\" Le temps s'arrête, impossible d'esquiver : %d dégâts bruts (ignore la Defense Power) !", raw)
+	}
 }
 
 func (p DioPattern) ActOptions(self *Boss, player *character.Character) []ActOption {
@@ -85,13 +100,41 @@ func (p DioPattern) ActOptions(self *Boss, player *character.Character) []ActOpt
 }
 
 // --- Zone 2 : Diavolo -------------------------------------------------
-// TODO: pattern de Diavolo (Stand "King Crimson" : suppression de temps,
-// esquive impossible sur un tour donné, contre-attaque garantie, etc.)
+// Pattern de Diavolo (Stand "King Crimson") : tous les 4 tours, il "efface"
+// quelques secondes de dégâts en se soignant d'une fraction de ses PV max,
+// ce qui punit un joueur qui grignote lentement au lieu de concentrer ses
+// coups les plus forts (Attaque de Stand). Sous 1/3 de ses PV, il s'enrage
+// et frappe plus fort - le combat devient plus dangereux juste avant la
+// victoire, pas plus facile.
 type DiavoloPattern struct{}
 
 func (p DiavoloPattern) Act(turn int, self *Boss, player *character.Character) string {
-	// TODO: remplace par le vrai pattern de Diavolo.
-	return DefaultPattern{}.Act(turn, self, player)
+	ap := self.AP
+	enraged := self.LP*3 <= self.MaxLP
+	if enraged {
+		ap += self.AP / 2
+	}
+
+	if turn%4 == 0 {
+		heal := self.MaxLP / 6
+		self.LP += heal
+		if self.LP > self.MaxLP {
+			self.LP = self.MaxLP
+		}
+		dmg := player.TakeDamage(ap)
+		msg := fmt.Sprintf("\"King Crimson efface le temps...\" %s referme ses blessures (+%d PV) et riposte pour %d dégâts.", self.Name, heal, dmg)
+		if enraged {
+			msg += " Acculé, il frappe avec une rage décuplée."
+		}
+		return msg
+	}
+
+	dmg := player.TakeDamage(ap)
+	msg := fmt.Sprintf("%s frappe avec la précision froide de King Crimson. %d dégâts.", self.Name, dmg)
+	if enraged {
+		msg += " Acculé, il frappe avec une rage décuplée."
+	}
+	return msg
 }
 
 func (p DiavoloPattern) ActOptions(self *Boss, player *character.Character) []ActOption {
@@ -121,13 +164,26 @@ func (p DiavoloPattern) ActOptions(self *Boss, player *character.Character) []Ac
 }
 
 // --- Zone 3 : Yoshikage Kira -------------------------------------------
-// TODO: pattern de Kira (Stand "Killer Queen" : bombes à retardement sur
-// les objets touchés, "Sheer Heart Attack" qui traque le joueur, etc.)
+// Pattern de Kira (Stand "Killer Queen") : ses bombes rendent ses dégâts
+// normaux croissants avec la durée du combat, et tous les 4 tours "Sheer
+// Heart Attack" fonce en ligne droite pour un coup garanti qui ignore la
+// Defense Power. Un joueur qui s'éternise à soigner au lieu de finir le
+// combat rapidement se fait rattraper par des dégâts de plus en plus lourds.
 type KiraPattern struct{}
 
 func (p KiraPattern) Act(turn int, self *Boss, player *character.Character) string {
-	// TODO: remplace par le vrai pattern de Kira.
-	return DefaultPattern{}.Act(turn, self, player)
+	if turn%4 == 0 {
+		raw := self.AP + turn
+		player.LP -= raw
+		if player.LP < 0 {
+			player.LP = 0
+		}
+		return fmt.Sprintf("\"Sheer Heart Attack\" fonce droit sur toi, impossible à esquiver : %d dégâts bruts !", raw)
+	}
+
+	bonus := turn / 2
+	dmg := player.TakeDamage(self.AP + bonus)
+	return fmt.Sprintf("%s plante discrètement une bombe. %d dégâts (Killer Queen s'impatiente : plus le combat dure, plus elle frappe fort).", self.Name, dmg)
 }
 
 func (p KiraPattern) ActOptions(self *Boss, player *character.Character) []ActOption {
@@ -157,13 +213,45 @@ func (p KiraPattern) ActOptions(self *Boss, player *character.Character) []ActOp
 }
 
 // --- Boss bonus : Enrico Pucci (Disque) --------------------------------
-// TODO: pattern de Pucci (Stand "Made in Heaven" / Disque de Pucci :
-// vol de Stand, accélération du temps en fin de combat, etc.)
+// Pattern de Pucci (Stand "Made in Heaven") : le plus complet des quatre,
+// il cumule le soin périodique de Diavolo (tous les 4 tours), le coup
+// garanti ignorant la Defense Power de DIO/Kira (tous les 5 tours, "le
+// temps accélère") et l'enrage à PV bas. Gérer les trois mécaniques à la
+// fois - sans jamais pouvoir se relâcher - est le vrai test du boss bonus.
 type PucciPattern struct{}
 
 func (p PucciPattern) Act(turn int, self *Boss, player *character.Character) string {
-	// TODO: remplace par le vrai pattern de Pucci.
-	return DefaultPattern{}.Act(turn, self, player)
+	ap := self.AP
+	enraged := self.LP*3 <= self.MaxLP
+	if enraged {
+		ap += self.AP / 2
+	}
+
+	if turn%4 == 0 {
+		heal := self.MaxLP / 8
+		self.LP += heal
+		if self.LP > self.MaxLP {
+			self.LP = self.MaxLP
+		}
+		dmg := player.TakeDamage(ap)
+		return fmt.Sprintf("%s referme une plaie grâce à son Disque (+%d PV) et riposte pour %d dégâts.", self.Name, heal, dmg)
+	}
+
+	if turn%5 == 0 {
+		raw := ap * 2
+		player.LP -= raw
+		if player.LP < 0 {
+			player.LP = 0
+		}
+		return fmt.Sprintf("\"Made in Heaven\" accélère le temps : impossible d'esquiver, %d dégâts bruts !", raw)
+	}
+
+	dmg := player.TakeDamage(ap)
+	msg := fmt.Sprintf("%s frappe avec la certitude froide de celui qui a vu le Paradis. %d dégâts.", self.Name, dmg)
+	if enraged {
+		msg += " Le Disque s'affole : ses coups sont de plus en plus violents."
+	}
+	return msg
 }
 
 func (p PucciPattern) ActOptions(self *Boss, player *character.Character) []ActOption {

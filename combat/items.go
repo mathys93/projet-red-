@@ -16,6 +16,8 @@ func itemDescription(item string) string {
 		return "Restaure 50 PV."
 	case "Potion de poison":
 		return "Inflige des dégâts, ignore la Defense Power."
+	case "Arrow":
+		return "Pari risqué : réveille un Stand aléatoire, bénéfique ou non."
 	}
 	return ""
 }
@@ -75,6 +77,10 @@ func useItem(b *boss.Boss, player *character.Character, item string) (bool, stri
 			time.Sleep(300 * time.Millisecond)
 		}
 		return true, "Le poison se dissipe."
+
+	case "Arrow":
+		player.RemoveItem(item)
+		return useArrow(player)
 	}
 
 	return false, fmt.Sprintf("%s ne peut pas être utilisé maintenant.", item)

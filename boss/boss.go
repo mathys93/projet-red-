@@ -113,25 +113,35 @@ func (b *Boss) ActOptions(player *character.Character) []ActOption {
 // jeu plutôt que de rester plate. Le boss bonus (Pucci), débloqué après
 // les 3 zones, reste le plus fort de tous.
 
-// NewDio crée le boss de la Zone 1 : le premier affrontement, pensé pour
-// rester accessible à un joueur qui vient de démarrer.
+// NewDio crée le boss de la Zone 1 : le premier affrontement. Toujours le
+// plus accessible des quatre, mais son pattern (voir DioPattern) oblige déjà
+// à composer avec un coup dévastateur et télégraphié plutôt que de gagner en
+// spammant l'attaque.
 func NewDio() *Boss {
-	return New("DIO", 5, 6, 2, 40, 40, "dio", DioPattern{}, ColorYellow)
+	return New("DIO", 5, 10, 4, 70, 50, "dio", DioPattern{}, ColorYellow)
 }
 
-// NewDiavolo crée le boss de la Zone 2 : nettement plus costaud que DIO.
+// NewDiavolo crée le boss de la Zone 2 : nettement plus costaud que DIO, et
+// son pattern (voir DiavoloPattern) se soigne périodiquement puis s'enrage
+// à PV bas, ce qui punit un joueur qui traîne au lieu de concentrer ses
+// dégâts.
 func NewDiavolo() *Boss {
-	return New("Diavolo", 8, 9, 4, 65, 75, "diavolo", DiavoloPattern{}, ColorPurple)
+	return New("Diavolo", 8, 14, 6, 110, 90, "diavolo", DiavoloPattern{}, ColorPurple)
 }
 
-// NewKira crée le boss de la Zone 3 : le plus fort des trois zones.
+// NewKira crée le boss de la Zone 3 : le plus fort des trois zones. Son
+// pattern (voir KiraPattern) inflige des dégâts croissants avec la durée du
+// combat (Bites the Dust), ce qui punit un joueur qui s'éternise à soigner
+// au lieu de finir le combat.
 func NewKira() *Boss {
-	return New("Yoshikage Kira", 11, 12, 5, 90, 120, "kira", KiraPattern{}, ColorCyan)
+	return New("Yoshikage Kira", 11, 18, 8, 150, 140, "kira", KiraPattern{}, ColorCyan)
 }
 
 // NewPucci crée le boss bonus (non assigné à une zone par défaut, voir
 // world.go) : Enrico Pucci et son Disque, débloqué après les 3 zones,
-// nettement au-dessus des trois autres.
+// nettement au-dessus des trois autres. Son pattern (voir PucciPattern)
+// cumule les trois mécaniques précédentes (coup télégraphié, soin
+// périodique, enrage) et exige donc de gérer les trois à la fois.
 func NewPucci() *Boss {
-	return New("Enrico Pucci", 15, 16, 7, 130, 220, "pucci", PucciPattern{}, ColorRed)
+	return New("Enrico Pucci", 15, 24, 10, 220, 260, "pucci", PucciPattern{}, ColorRed)
 }

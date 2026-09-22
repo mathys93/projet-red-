@@ -380,6 +380,22 @@ func waitContinue(ts *terminalSession) bool {
 	return ts.readKey() != KeyQuit
 }
 
+// tryResurrect annule une mort du joueur s'il porte le charme de
+// résurrection posé par la Flèche (voir combat/arrow.go, King Crimson) : il
+// revient avec un tiers de ses PV max, le charme consommé. Renvoie false
+// (rien à faire) si le joueur est encore en vie ou ne porte pas le charme.
+func tryResurrect(player *character.Character) bool {
+	if player.IsAlive() || !player.HasResurrectCharm {
+		return false
+	}
+	player.HasResurrectCharm = false
+	player.LP = player.MaxLP / 3
+	if player.LP < 1 {
+		player.LP = 1
+	}
+	return true
+}
+
 // Result indique comment un combat s'est terminé.
 type Result int
 
@@ -419,83 +435,90 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 	message := fmt.Sprintf("%s bloque le passage !", b.Name)
 
 	for player.IsAlive() && b.IsAlive() {
-		RenderBattleScreen(b, player, selected, message)
-
-		key := ts.readKey()
-		chosen := -1
-		switch key {
-		case KeyLeft, KeyUp:
-			selected = (selected + 3) % 4
-		case KeyRight, KeyDown:
-			selected = (selected + 1) % 4
-		case KeyQuit:
-			return ResultQuit
-		case KeyEnter:
-			chosen = selected
-		case KeyOther:
-			if idx, ok := mainMenuHotkeys[ts.raw]; ok {
-				selected = idx
-				chosen = idx
-			}
-		}
-		if chosen == -1 {
-			continue
-		}
-
-		acted := true
-		switch chosen {
-		case 0: // FIGHT : choix de l'attaque (coup de poing, Stand...).
-			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
-			if !ok {
-				acted = false
-				break
-			}
-			move := player.Moves[idx]
-			if player.MP < move.MPCost {
-				message = "Pas assez de MP pour cette action !"
-				acted = false
-				break
-			}
-			player.MP -= move.MPCost
-			before := b.LP
-			message = move.Perform(player, b.Character)
-			animateHPChange(b, player, false, before, b.LP, message)
-		case 1: // ACT : choix de l'action "lore" (parler, observer...).
-			options := b.ActOptions(player)
-			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
-			if !ok {
-				acted = false
-				break
-			}
-			message = options[idx].Resolve(b, player)
-		case 2: // ITEM : choix de l'objet à utiliser dans l'inventaire.
-			if len(player.Inventory) == 0 {
-				message = "Ton inventaire est vide !"
-				acted = false
-				break
-			}
-			items, names := itemMenuItems(player)
-			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis un objet", player.Name), items)
-			if !ok {
-				acted = false
-				break
-			}
-			used, msg := useItem(b, player, names[idx])
-			message = msg
-			if !used {
-				acted = false
-			}
-		case 3: // MERCY
-			message = fmt.Sprintf("Tu épargnes %s...", b.Name)
+		if player.StunnedTurns > 0 {
+			// Enraciné (voir combat/arrow.go, Hermit Purple) : le tour est
+			// perdu sans passer par le menu, mais le boss agit quand même.
+			player.StunnedTurns--
+			message = "Tu es enraciné(e), impossible d'agir ce tour-ci !"
+		} else {
 			RenderBattleScreen(b, player, selected, message)
-			return ResultSpared
-		}
 
-		if !acted {
-			// Choix annulé (X) ou impossible (pas assez de MP, inventaire
-			// vide...) : on reste au menu principal, le tour du boss
-			// n'est pas déclenché.
-			continue
+			key := ts.readKey()
+			chosen := -1
+			switch key {
+			case KeyLeft, KeyUp:
+				selected = (selected + 3) % 4
+			case KeyRight, KeyDown:
+				selected = (selected + 1) % 4
+			case KeyQuit:
+				return ResultQuit
+			case KeyEnter:
+				chosen = selected
+			case KeyOther:
+				if idx, ok := mainMenuHotkeys[ts.raw]; ok {
+					selected = idx
+					chosen = idx
+				}
+			}
+			if chosen == -1 {
+				continue
+			}
+
+			acted := true
+			switch chosen {
+			case 0: // FIGHT : choix de l'attaque (coup de poing, Stand...).
+				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
+				if !ok {
+					acted = false
+					break
+				}
+				move := player.Moves[idx]
+				if player.MP < move.MPCost {
+					message = "Pas assez de MP pour cette action !"
+					acted = false
+					break
+				}
+				player.MP -= move.MPCost
+				before := b.LP
+				message = move.Perform(player, b.Character)
+				animateHPChange(b, player, false, before, b.LP, message)
+			case 1: // ACT : choix de l'action "lore" (parler, observer...).
+				options := b.ActOptions(player)
+				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
+				if !ok {
+					acted = false
+					break
+				}
+				message = options[idx].Resolve(b, player)
+			case 2: // ITEM : choix de l'objet à utiliser dans l'inventaire.
+				if len(player.Inventory) == 0 {
+					message = "Ton inventaire est vide !"
+					acted = false
+					break
+				}
+				items, names := itemMenuItems(player)
+				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis un objet", player.Name), items)
+				if !ok {
+					acted = false
+					break
+				}
+				used, msg := useItem(b, player, names[idx])
+				message = msg
+				if !used {
+					acted = false
+				}
+			case 3: // MERCY
+				message = fmt.Sprintf("Tu épargnes %s...", b.Name)
+				RenderBattleScreen(b, player, selected, message)
+				return ResultSpared
+			}
+
+			if !acted {
+				// Choix annulé (X) ou impossible (pas assez de MP, inventaire
+				// vide...) : on reste au menu principal, le tour du boss
+				// n'est pas déclenché.
+				continue
+			}
 		}
 
 		RenderTurnMessage(b, player, message)
@@ -512,9 +535,14 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 		if !player.IsAlive() {
 			// Un objet utilisé au tour du joueur (ex: Potion de poison) peut
 			// l'achever avant même le tour du boss.
-			RenderTurnMessage(b, player, "Tu es tombé(e) au combat...")
-			waitContinue(ts)
-			return ResultDefeat
+			if tryResurrect(player) {
+				RenderTurnMessage(b, player, fmt.Sprintf("Le futur où tu meurs a été effacé ! Tu reviens avec %d PV.", player.LP))
+				waitContinue(ts)
+			} else {
+				RenderTurnMessage(b, player, "Tu es tombé(e) au combat...")
+				waitContinue(ts)
+				return ResultDefeat
+			}
 		}
 
 		// Le tour du boss, affiché à part : c'est là que chaque boss aura
@@ -524,17 +552,28 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 			return ResultQuit
 		}
 		beforePlayerLP := player.LP
-		bossMessage := b.Turn(turn, player)
-		turn++
+		var bossMessage string
+		if player.SkipBossNextTurn {
+			player.SkipBossNextTurn = false
+			bossMessage = fmt.Sprintf("Le temps reste figé un instant de plus : %s ne peut pas agir !", b.Name)
+		} else {
+			bossMessage = b.Turn(turn, player)
+			turn++
+		}
 		animateHPChange(b, player, true, beforePlayerLP, player.LP, bossMessage)
 		if !waitContinue(ts) {
 			return ResultQuit
 		}
 
 		if !player.IsAlive() {
-			RenderTurnMessage(b, player, "Tu es tombé(e) au combat...")
-			waitContinue(ts)
-			return ResultDefeat
+			if tryResurrect(player) {
+				RenderTurnMessage(b, player, fmt.Sprintf("Le futur où tu meurs a été effacé ! Tu reviens avec %d PV.", player.LP))
+				waitContinue(ts)
+			} else {
+				RenderTurnMessage(b, player, "Tu es tombé(e) au combat...")
+				waitContinue(ts)
+				return ResultDefeat
+			}
 		}
 
 		message = ""
