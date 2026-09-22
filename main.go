@@ -1,4 +1,4 @@
-package ProjetRED
+package main
 
 import (
 	"bufio"

@@ -92,7 +92,6 @@ func fabriquer(c *Character, item string) {
 
 	c.Fragment -= forgeronObjets[item]
 	addInventory(c, item)
-
 	fmt.Printf("Tu as fabriqué %s !\n", item)
 	fmt.Printf("Fragments restants : %d\n", c.Fragment)
 	fmt.Printf("Inventaire du joueur : %v\n", c.Inventory)
