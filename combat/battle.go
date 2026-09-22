@@ -496,7 +496,15 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 			player.SkipBossNextTurn = false
 			bossMessage = fmt.Sprintf("Le temps reste figé un instant de plus : %s ne peut pas agir !", b.Name)
 		} else {
-			bossMessage = b.Turn(turn, player)
+			struck, quit := RunDodge(b, player)
+			if quit {
+				return ResultQuit
+			}
+			if struck {
+				bossMessage = b.Turn(turn, player)
+			} else {
+				bossMessage = fmt.Sprintf("Tu esquives l'attaque de %s sans une égratignure !", b.Name)
+			}
 			turn++
 		}
 		animateHPChange(b, player, true, beforePlayerLP, player.LP, bossMessage)

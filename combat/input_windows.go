@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	procReadConsoleInput = kernel32.NewProc("ReadConsoleInputW")
-	procGetConsoleMode   = kernel32.NewProc("GetConsoleMode")
-	procSetConsoleMode   = kernel32.NewProc("SetConsoleMode")
+	procReadConsoleInput  = kernel32.NewProc("ReadConsoleInputW")
+	procGetConsoleMode    = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode    = kernel32.NewProc("SetConsoleMode")
+	procGetNumberOfEvents = kernel32.NewProc("GetNumberOfConsoleInputEvents")
+	procFlushConsoleInput = kernel32.NewProc("FlushConsoleInputBuffer")
 )
 
 type keyEventRecord struct {
@@ -85,6 +87,24 @@ func consoleAvailable() bool {
 	return ret != 0
 }
 
+func keyForVirtualKey(vk uint16) (Key, bool) {
+	switch vk {
+	case vkReturn, vkSpace:
+		return KeyEnter, true
+	case vkEscape:
+		return KeyQuit, true
+	case vkLeft:
+		return KeyLeft, true
+	case vkRight:
+		return KeyRight, true
+	case vkUp:
+		return KeyUp, true
+	case vkDown:
+		return KeyDown, true
+	}
+	return KeyOther, false
+}
+
 func readConsoleKey() (Key, rune, bool) {
 	var rec inputRecord
 	var read uint32
@@ -102,19 +122,8 @@ func readConsoleKey() (Key, rune, bool) {
 			continue
 		}
 
-		switch rec.KeyEvent.VirtualKeyCode {
-		case vkReturn, vkSpace:
-			return KeyEnter, 0, true
-		case vkEscape:
-			return KeyQuit, 0, true
-		case vkLeft:
-			return KeyLeft, 0, true
-		case vkRight:
-			return KeyRight, 0, true
-		case vkUp:
-			return KeyUp, 0, true
-		case vkDown:
-			return KeyDown, 0, true
+		if k, ok := keyForVirtualKey(rec.KeyEvent.VirtualKeyCode); ok {
+			return k, 0, true
 		}
 
 		if ch := rune(rec.KeyEvent.UnicodeChar); ch != 0 {
@@ -124,6 +133,51 @@ func readConsoleKey() (Key, rune, bool) {
 			return KeyOther, ch, true
 		}
 	}
+}
+
+func canPollInput() bool {
+	return consoleAvailable()
+}
+
+func pollKey() (Key, bool) {
+	var pending uint32
+	ret, _, _ := procGetNumberOfEvents.Call(uintptr(stdinHandle()), uintptr(unsafe.Pointer(&pending)))
+	if ret == 0 || pending == 0 {
+		return KeyOther, false
+	}
+
+	var rec inputRecord
+	var read uint32
+	key := KeyOther
+	found := false
+	for i := uint32(0); i < pending; i++ {
+		r, _, _ := procReadConsoleInput.Call(
+			uintptr(stdinHandle()),
+			uintptr(unsafe.Pointer(&rec)),
+			1,
+			uintptr(unsafe.Pointer(&read)),
+		)
+		if r == 0 || read == 0 {
+			break
+		}
+		if rec.EventType != eventKey || rec.KeyEvent.KeyDown == 0 {
+			continue
+		}
+		if k, ok := keyForVirtualKey(rec.KeyEvent.VirtualKeyCode); ok {
+			key, found = k, true
+			continue
+		}
+		if ch := rune(rec.KeyEvent.UnicodeChar); ch != 0 {
+			if k, ok := keyForRune(ch); ok {
+				key, found = k, true
+			}
+		}
+	}
+	return key, found
+}
+
+func flushInput() {
+	procFlushConsoleInput.Call(uintptr(stdinHandle()))
 }
 
 func (ts *terminalSession) readKey() Key {

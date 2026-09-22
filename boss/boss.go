@@ -27,6 +27,15 @@ type ActOption struct {
 	Resolve     func(self *Boss, player *character.Character) string
 }
 
+type AttackStyle int
+
+const (
+	AttackSweep AttackStyle = iota
+	AttackConverge
+	AttackRain
+	AttackStorm
+)
+
 type Boss struct {
 	*character.Character
 	Art      string
@@ -34,6 +43,7 @@ type Boss struct {
 	Pattern  Pattern
 	Color    string
 	XPReward int
+	Style    AttackStyle
 }
 
 func New(name string, level, ap, dp, lp, xpReward int, artKey string, pattern Pattern, color string) *Boss {
@@ -65,17 +75,25 @@ func (b *Boss) ActOptions(player *character.Character) []ActOption {
 }
 
 func NewDio() *Boss {
-	return New("DIO", 5, 10, 4, 70, 50, "dio", DioPattern{}, ColorYellow)
+	b := New("DIO", 5, 10, 4, 70, 50, "dio", DioPattern{}, ColorYellow)
+	b.Style = AttackSweep
+	return b
 }
 
 func NewDiavolo() *Boss {
-	return New("Diavolo", 8, 14, 6, 110, 90, "diavolo", DiavoloPattern{}, ColorPurple)
+	b := New("Diavolo", 8, 14, 6, 110, 90, "diavolo", DiavoloPattern{}, ColorPurple)
+	b.Style = AttackConverge
+	return b
 }
 
 func NewKira() *Boss {
-	return New("Yoshikage Kira", 11, 18, 8, 150, 140, "kira", KiraPattern{}, ColorCyan)
+	b := New("Yoshikage Kira", 11, 18, 8, 150, 140, "kira", KiraPattern{}, ColorCyan)
+	b.Style = AttackRain
+	return b
 }
 
 func NewPucci() *Boss {
-	return New("Enrico Pucci", 15, 24, 10, 220, 260, "pucci", PucciPattern{}, ColorRed)
+	b := New("Enrico Pucci", 15, 24, 10, 220, 260, "pucci", PucciPattern{}, ColorRed)
+	b.Style = AttackStorm
+	return b
 }
