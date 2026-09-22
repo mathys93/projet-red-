@@ -98,9 +98,19 @@ func shopChoose(ts *terminalSession, art, title string, items []menuItem) (idx i
 	selected := 0
 	for {
 		clearScreen()
+		bw := boxWidth(boss.ArtWidth + 4)
+		bh := boss.ArtHeight + 2
+		contentHeight := bh + 6
+		for _, it := range items {
+			contentHeight++
+			if it.Description != "" {
+				contentHeight++
+			}
+		}
+		printPadding(contentHeight)
 		fmt.Println()
 		fmt.Println(colYellow + "  " + title + colReset)
-		DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, art, colYellow)
+		DrawBox(bw, bh, art, colYellow)
 		fmt.Println()
 		for i, it := range items {
 			marker := "   "

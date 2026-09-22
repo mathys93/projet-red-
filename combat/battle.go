@@ -21,6 +21,52 @@ func clearScreen() {
 	fmt.Print("\033[2J\033[H\033[?25l") // efface l'écran + cache le curseur
 }
 
+// MaximizeConsoleWindow agrandit la fenêtre de la console au maximum, si
+// possible (voir combat/termsize_windows.go). Appelée une fois au tout
+// début du programme (voir main.go).
+func MaximizeConsoleWindow() {
+	maximizeConsoleWindow()
+}
+
+// terminalSize renvoie la taille (colonnes, lignes) du terminal actuel,
+// avec un repli raisonnable quand elle ne peut pas être détectée (terminal
+// sans fenêtre propre, sortie redirigée...), pour que l'affichage puisse
+// toujours calculer une mise en page plutôt que planter.
+func terminalSize() (cols, rows int) {
+	cols, rows = queryTerminalSize()
+	if cols < 40 {
+		cols = 80
+	}
+	if rows < 20 {
+		rows = 24
+	}
+	return cols, rows
+}
+
+// boxWidth calcule la largeur de la boîte de combat/boutique pour qu'elle
+// remplisse (quasi) toute la largeur du terminal, façon Undertale en plein
+// écran, plutôt que de rester à sa taille minimale dans un coin de l'écran.
+// Elle ne descend jamais sous minWidth (la taille requise par l'artwork).
+func boxWidth(minWidth int) int {
+	cols, _ := terminalSize()
+	w := cols - 4
+	if w < minWidth {
+		w = minWidth
+	}
+	return w
+}
+
+// printPadding centre verticalement le contenu d'un écran (contentHeight
+// lignes) en imprimant des lignes vides au-dessus, plutôt que de le laisser
+// collé en haut du terminal avec tout le reste de l'écran vide en dessous.
+func printPadding(contentHeight int) {
+	_, rows := terminalSize()
+	pad := (rows - contentHeight) / 2
+	for i := 0; i < pad; i++ {
+		fmt.Println()
+	}
+}
+
 // DrawBox dessine la boîte de combat (largeur/hauteur fixes) avec l'artwork
 // ASCII centré dedans, teinté avec artColor (colWhite si vide).
 func DrawBox(width, height int, art string, artColor string) {
@@ -114,9 +160,16 @@ func DrawMenu(selected int) {
 // chaque frame où c'est au joueur de choisir son action.
 func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int, message string) {
 	clearScreen()
+	bw := boxWidth(boss.ArtWidth + 4)
+	bh := boss.ArtHeight + 2
+	contentHeight := bh + 9
+	if message != "" {
+		contentHeight++
+	}
+	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art, b.Color)
+	DrawBox(bw, bh, b.Art, b.Color)
 	fmt.Println()
 	DrawEnemyBar(b)
 	if message != "" {
@@ -134,9 +187,16 @@ func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int,
 // message comme avant.
 func RenderTurnMessage(b *boss.Boss, player *character.Character, message string) {
 	clearScreen()
+	bw := boxWidth(boss.ArtWidth + 4)
+	bh := boss.ArtHeight + 2
+	contentHeight := bh + 7
+	if message != "" {
+		contentHeight++
+	}
+	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art, b.Color)
+	DrawBox(bw, bh, b.Art, b.Color)
 	fmt.Println()
 	DrawEnemyBar(b)
 	if message != "" {

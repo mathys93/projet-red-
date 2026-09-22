@@ -17,6 +17,11 @@ func SelectZone(w *world.World) *world.Zone {
 
 	for {
 		clearScreen()
+		contentHeight := 4 + len(w.Zones)*3
+		if note != "" {
+			contentHeight += 2
+		}
+		printPadding(contentHeight)
 		fmt.Println()
 		fmt.Println(colYellow + "======================  CARTE  ======================" + colReset)
 		fmt.Println()
@@ -72,6 +77,7 @@ func ConfirmBonusBoss(bossName string) bool {
 
 	for {
 		clearScreen()
+		printPadding(5)
 		fmt.Println()
 		fmt.Println(colYellow + "Les trois zones sont terminées." + colReset)
 		fmt.Printf("Un dernier adversaire t'attend : %s%s%s\n\n", colRed, bossName, colReset)

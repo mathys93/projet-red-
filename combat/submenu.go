@@ -28,6 +28,14 @@ func chooseOption(ts *terminalSession, title string, items []menuItem) (idx int,
 	selected := 0
 	for {
 		clearScreen()
+		contentHeight := 5
+		for _, it := range items {
+			contentHeight++
+			if it.Description != "" {
+				contentHeight++
+			}
+		}
+		printPadding(contentHeight)
 		fmt.Println()
 		fmt.Println(colYellow + "  " + title + colReset)
 		fmt.Println()

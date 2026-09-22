@@ -23,6 +23,12 @@ import (
 )
 
 func main() {
+	// Agrandit la fenêtre de la console au maximum au démarrage, façon jeu
+	// en plein écran (Undertale) : sans effet si le terminal n'a pas de
+	// fenêtre propre (terminal intégré à un éditeur, par exemple), voir
+	// combat/termsize_windows.go.
+	combat.MaximizeConsoleWindow()
+
 	player := character.New("Personnage 1", 1, 8, 3, 50)
 	player.AddItem("Potion de vie")
 	player.AddItem("Potion de vie")
