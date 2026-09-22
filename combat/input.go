@@ -54,7 +54,16 @@ var stdinScanner = bufio.NewScanner(os.Stdin)
 // terminalSession représente une session de lecture clavier pour un écran
 // donné (carte ou combat). Elle ne possède plus son propre scanner : elle
 // s'appuie sur stdinScanner, partagé.
-type terminalSession struct{}
+//
+// raw garde la dernière ligne lue (en minuscules, sans espaces) même
+// quand elle ne correspond à aucune Key connue (KeyOther) : ça sert aux
+// raccourcis directs des menus de combat (taper "2" ou "a" puis Entrée
+// pour choisir ET valider une option en une seule saisie, plutôt que de
+// naviguer option par option avant de valider - voir combat/submenu.go et
+// RunBattle dans battle.go).
+type terminalSession struct {
+	raw string
+}
 
 func newTerminalSession() *terminalSession {
 	return &terminalSession{}
@@ -82,6 +91,7 @@ func (ts *terminalSession) readKey() Key {
 		return KeyQuit
 	}
 	line := strings.ToLower(strings.TrimSpace(stdinScanner.Text()))
+	ts.raw = line
 	switch line {
 	case "":
 		return KeyEnter

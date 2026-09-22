@@ -11,9 +11,11 @@ import (
 )
 
 // Taille utile de la boîte de combat pour l'artwork (voir package combat).
+// Agrandie par rapport aux 46x14 d'origine : les artworks étaient trop
+// petits et peu lisibles dans la boîte de combat.
 const (
-	ArtWidth  = 46
-	ArtHeight = 14
+	ArtWidth  = 62
+	ArtHeight = 20
 )
 
 // Pattern décrit le comportement d'un boss pendant son tour, et ce qui
@@ -21,15 +23,29 @@ const (
 // personnalises boss par boss (voir patterns.go) : c'est toi qui t'occupes
 // du pattern de chaque boss, ce fichier ne fait que poser la structure.
 type Pattern interface {
-	// Act est appelé après l'action du joueur (sauf MERCY) : c'est ici que
+	// Act est appelé pendant le tour du boss (après le tour complet du
+	// joueur, affiché séparément - voir combat.RunBattle) : c'est ici que
 	// le boss riposte / esquive / lance son attaque spéciale. `turn` est le
 	// numéro du tour (démarre à 1). Renvoie le message affiché sous la
 	// boîte de combat.
 	Act(turn int, self *Boss, player *character.Character) string
 
-	// ActText est le texte affiché quand le joueur choisit l'option ACT du
-	// menu (l'équivalent des sous-menus "Check/Talk/..." d'Undertale).
-	ActText(self *Boss, player *character.Character) string
+	// ActOptions renvoie les sous-options affichées quand le joueur choisit
+	// ACT (l'équivalent des sous-menus "Check/Talk/Sing..." d'Undertale) :
+	// une par action "lore" possible avec ce boss (parler, observer,
+	// chanter...). Chaque option a son propre Resolve, appelé quand le
+	// joueur la sélectionne.
+	ActOptions(self *Boss, player *character.Character) []ActOption
+}
+
+// ActOption est une option du sous-menu ACT : un libellé court, une
+// description affichée en dessous, et ce qui se passe quand le joueur la
+// choisit (le message renvoyé par Resolve est affiché comme résultat du
+// tour du joueur).
+type ActOption struct {
+	Label       string
+	Description string
+	Resolve     func(self *Boss, player *character.Character) string
 }
 
 // Boss est un ennemi affrontable : ses statistiques (Character embarqué),
@@ -63,9 +79,9 @@ func (b *Boss) Turn(turn int, player *character.Character) string {
 	return b.Pattern.Act(turn, b, player)
 }
 
-// Act renvoie le texte de l'option ACT (délègue à son Pattern).
-func (b *Boss) ActDescription(player *character.Character) string {
-	return b.Pattern.ActText(b, player)
+// ActOptions renvoie les options du sous-menu ACT (délègue à son Pattern).
+func (b *Boss) ActOptions(player *character.Character) []ActOption {
+	return b.Pattern.ActOptions(b, player)
 }
 
 // ---------------------------------------------------------------
