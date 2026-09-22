@@ -24,8 +24,8 @@ import (
 
 func main() {
 	player := character.New("Personnage 1", 1, 8, 3, 50)
-	player.AddItem("Potion")
-	player.AddItem("Potion")
+	player.AddItem("Potion de vie")
+	player.AddItem("Potion de vie")
 
 	w := world.New()
 	// Le nom de la zone est affiché au-dessus de la boîte de combat (la
