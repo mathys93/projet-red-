@@ -1,17 +1,23 @@
-package main
+package utilitaire
 
 import "fmt"
 
 type Character struct {
 	string
 	joestar   string
+	Name      string
+	Joestar   string
 	Level     int
 	MaxHP     int
 	CurrentHP int
 	Inventory []string // une liste de noms d'items
 }
 
-func removeInventoryFromCharacter(c *Character, item string) bool {
+func addInventory(c *Character, item string) {
+	c.Inventory = append(c.Inventory, item)
+}
+
+func removeInventory(c *Character, item string) bool {
 	for i, it := range c.Inventory {
 		if it == item {
 			// on recolle le slice sans l'élément à l'index i
@@ -23,7 +29,7 @@ func removeInventoryFromCharacter(c *Character, item string) bool {
 }
 func takePot(c *Character) {
 	// 1. on retire la potion (et on vérifie qu'on en avait une)
-	if !removeInventoryFromCharacter(c, "Potion de vie") {
+	if !removeInventory(c, "Potion de vie") {
 		fmt.Println("Vous n'avez pas de potion de vie !")
 		return
 	}
@@ -39,7 +45,17 @@ func takePot(c *Character) {
 	// 4. on affiche PV actuels / PV max
 	fmt.Printf("Vous utilisez Potion de vie. PV : %d / %d\n", c.CurrentHP, c.MaxHP)
 }
+
 func displayInventory(c *Character) {
+	for i, item := range c.Inventory {
+		fmt.Printf("%d. %s\n", i+1, item)
+	}
+	fmt.Println("Tapez le nom de l'item à utiliser (ou 0 pour retour) :")
+	// lis l'entrée avec bufio.Scanner ou fmt.Scanln, puis :
+	// switch choix { case "Potion de vie": takePot(c) ... }
+}
+
+func accessInventory(c *Character) {
 	for i, item := range c.Inventory {
 		fmt.Printf("%d. %s\n", i+1, item)
 	}

@@ -1,15 +1,19 @@
-package main
+package utilitaire
 
-import "fmt"
+import (
+	"fmt"
 
-// forgeronObjets liste les équipements fabricables et leur coût en Fragments
+	"ProjetRED/character"
+)
+
+// forgeronObjets liste les équipements fabricables et leur coût en Fragments.
 var forgeronObjets = map[string]int{
 	"Chapeau de l'aventurier": 5,
 	"Tunique de l'aventurier": 5,
 	"Bottes de l'aventurier":  5,
 }
 
-// forgeronRessources liste les matériaux nécessaires à chaque fabrication
+// forgeronRessources liste les matériaux nécessaires à chaque fabrication.
 var forgeronRessources = map[string]map[string]int{
 	"Chapeau de l'aventurier": {
 		"Plume de Corbeau": 1,
@@ -25,32 +29,21 @@ var forgeronRessources = map[string]map[string]int{
 	},
 }
 
-// compteItem compte le nombre d'occurrences d'un item dans l'inventaire
-func compteItem(c *Character, item string) int {
-	count := 0
-	for _, it := range c.Inventory {
-		if it == item {
-			count++
-		}
-	}
-	return count
-}
-
-// possedeRessources vérifie que le joueur a tous les matériaux nécessaires
-func possedeRessources(c *Character, item string) bool {
+// possedeRessources vérifie que le joueur a tous les matériaux nécessaires.
+func possedeRessources(c *character.Character, item string) bool {
 	for ressource, quantite := range forgeronRessources[item] {
-		if compteItem(c, ressource) < quantite {
+		if c.CountItem(ressource) < quantite {
 			fmt.Printf("Il te manque des ressources : %s (%d requis, tu en as %d).\n",
-				ressource, quantite, compteItem(c, ressource))
+				ressource, quantite, c.CountItem(ressource))
 			return false
 		}
 	}
 	return true
 }
 
-// peutFabriquer vérifie que l'objet existe, que le joueur a assez de Fragments,
-// les ressources nécessaires, et de la place dans l'inventaire.
-func peutFabriquer(c *Character, item string) bool {
+// PeutFabriquer vérifie que l'objet existe, que le joueur a assez de
+// Fragments, les ressources nécessaires, et de la place dans l'inventaire.
+func PeutFabriquer(c *character.Character, item string) bool {
 	prix, existe := forgeronObjets[item]
 	if !existe {
 		fmt.Println("Le forgeron ne fabrique pas cet objet.")
@@ -75,23 +68,31 @@ func peutFabriquer(c *Character, item string) bool {
 	return true
 }
 
-// fabriquer gère la fabrication d'un équipement chez le forgeron :
-// consomme les Fragments, retire les ressources, puis ajoute l'objet fabriqué.
-func fabriquer(c *Character, item string) {
-	if !peutFabriquer(c, item) {
+// Fabriquer gère la fabrication d'un équipement chez le forgeron : consomme
+// les Fragments, retire les ressources, puis ajoute l'objet fabriqué.
+func Fabriquer(c *character.Character, item string) {
+	if !PeutFabriquer(c, item) {
 		fmt.Println("Fabrication impossible.")
 		return
 	}
 
-	// on retire les ressources consommées
 	for ressource, quantite := range forgeronRessources[item] {
 		for i := 0; i < quantite; i++ {
+<<<<<<< HEAD
 			removeInventory(ressource)
 		}
 	}
 
 	c.Fragments -= forgeronObjets[item]
 	addInventory(item)
+=======
+			c.RemoveItem(ressource)
+		}
+	}
+
+	c.Fragment -= forgeronObjets[item]
+	c.AddItem(item)
+>>>>>>> 405df67e48e273889fed1336da44d1d9a1855988
 	fmt.Printf("Tu as fabriqué %s !\n", item)
 	fmt.Printf("Fragments restants : %d\n", c.Fragments)
 	fmt.Printf("Inventaire du joueur : %v\n", c.Inventory)
