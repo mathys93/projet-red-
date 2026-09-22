@@ -25,10 +25,52 @@ type Character struct {
 	MaxLP int // Life Points maximum
 
 	XP       int
-	MP       int
+	MP       int // Magic/Stand Points actuels (coût des attaques de Stand en FIGHT)
+	MaxMP    int
 	Fragment int // monnaie utilisée chez le forgeron
 
 	Inventory []string
+
+	// Moves sont les actions proposées dans le sous-menu FIGHT (coup de
+	// poing, attaque de Stand...). Personnalise cette liste après New()
+	// pour donner des attaques propres à un personnage.
+	Moves []Move
+}
+
+// Move est une action de combat sélectionnable en FIGHT. Perform applique
+// l'effet (dégâts...) sur la cible et renvoie le message affiché comme
+// résultat du tour du joueur ; le coût en MP est vérifié et déduit par
+// l'appelant (voir combat.RunBattle) avant d'appeler Perform.
+type Move struct {
+	Name        string
+	Description string
+	MPCost      int
+	Perform     func(user, target *Character) string
+}
+
+// DefaultMoves renvoie les actions de FIGHT de base communes à tout
+// personnage : un coup de poing sans coût, et une attaque de Stand plus
+// puissante qui consomme du MP.
+func DefaultMoves() []Move {
+	return []Move{
+		{
+			Name:        "Coup de poing",
+			Description: "Une frappe franche, sans coût de MP.",
+			Perform: func(user, target *Character) string {
+				dmg := target.TakeDamage(user.AP)
+				return fmt.Sprintf("%s frappe %s d'un coup de poing ! %d dégâts.", user.Name, target.Name, dmg)
+			},
+		},
+		{
+			Name:        "Attaque de Stand",
+			Description: "Une attaque puissante (dégâts doublés).",
+			MPCost:      5,
+			Perform: func(user, target *Character) string {
+				dmg := target.TakeDamage(user.AP * 2)
+				return fmt.Sprintf("%s déchaîne son Stand sur %s ! %d dégâts.", user.Name, target.Name, dmg)
+			},
+		},
+	}
 }
 
 // New crée un nouveau personnage avec des PV pleins.
@@ -40,7 +82,10 @@ func New(name string, level, ap, dp, lp int) *Character {
 		DP:        dp,
 		LP:        lp,
 		MaxLP:     lp,
+		MP:        20,
+		MaxMP:     20,
 		Inventory: []string{},
+		Moves:     DefaultMoves(),
 	}
 }
 
