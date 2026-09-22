@@ -5,12 +5,15 @@ package world
 
 import "ProjetRED/boss"
 
-// Zone représente une zone de la carte, avec le boss qui la garde.
+// Zone représente une zone de la carte. La plupart gardent un boss, mais
+// une zone peut aussi être une boutique (IsShop) : Boss est alors nil, et
+// elle reste toujours visitable (jamais marquée Cleared).
 type Zone struct {
 	Name        string
 	Description string
-	Boss        *boss.Boss
+	Boss        *boss.Boss // nil quand IsShop est vrai
 	Cleared     bool
+	IsShop      bool
 }
 
 // World contient les zones de la carte et le boss bonus.
@@ -38,15 +41,24 @@ func New() *World {
 				Description: "Une ville tranquille... en apparence. Kira s'y cache.",
 				Boss:        boss.NewKira(),
 			},
+			{
+				Name:        "Zone 4 - La Boutique",
+				Description: "Un carrefour marchand entre deux affrontements : le Marchand et le Forgeron y attendent le client. Rien à craindre ici.",
+				IsShop:      true,
+			},
 		},
 		BonusBoss: boss.NewPucci(),
 	}
 }
 
-// AllCleared indique si les trois zones ont été nettoyées (boss vaincus ou
-// épargnés), ce qui débloque le boss bonus.
+// AllCleared indique si les trois zones de boss ont été nettoyées (boss
+// vaincus ou épargnés), ce qui débloque le boss bonus. La boutique n'est
+// jamais "nettoyée" (ce n'est pas un combat) : elle n'entre pas en compte.
 func (w *World) AllCleared() bool {
 	for _, z := range w.Zones {
+		if z.IsShop {
+			continue
+		}
 		if !z.Cleared {
 			return false
 		}

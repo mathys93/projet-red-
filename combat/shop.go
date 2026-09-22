@@ -11,32 +11,10 @@ import (
 	"ProjetRED/utilitaire"
 )
 
-// OfferShop propose au joueur de visiter la boutique (marchand + forgeron)
-// entre deux combats de boss. X (KeyQuit) refuse simplement l'offre et
-// renvoie la main à la carte, sans quitter le jeu.
-func OfferShop(player *character.Character) {
-	ts := newTerminalSession()
-	defer ts.restore()
-
-	for {
-		clearScreen()
-		fmt.Println()
-		fmt.Println(colYellow + "Une accalmie avant la suite..." + colReset)
-		fmt.Println(colWhite + "Veux-tu visiter la boutique ? (Entrée = oui, X = non)" + colReset)
-
-		switch ts.readKey() {
-		case KeyEnter:
-			runShop(player)
-			return
-		case KeyQuit:
-			return
-		}
-	}
-}
-
-// runShop affiche l'écran de la boutique (marchand / forgeron / partir) et
-// boucle jusqu'à ce que le joueur choisisse de partir.
-func runShop(player *character.Character) {
+// RunShop affiche l'écran de la boutique (Zone 4 sur la carte, voir
+// world.New) : marchand / forgeron / partir, et boucle jusqu'à ce que le
+// joueur choisisse de partir (X ou "Partir").
+func RunShop(player *character.Character) {
 	ts := newTerminalSession()
 	defer ts.restore()
 

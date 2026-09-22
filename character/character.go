@@ -63,7 +63,9 @@ func DefaultMoves() []Move {
 	}
 }
 
-// New crée un nouveau personnage avec des PV pleins.
+// New crée un nouveau personnage avec des PV pleins. Fragment démarre à 20 :
+// sans ça, un joueur fraîchement créé n'a jamais de quoi acheter quoi que ce
+// soit chez le marchand ou le forgeron.
 func New(name string, level, ap, dp, lp int) *Character {
 	return &Character{
 		Name:      name,
@@ -74,6 +76,7 @@ func New(name string, level, ap, dp, lp int) *Character {
 		MaxLP:     lp,
 		MP:        20,
 		MaxMP:     20,
+		Fragment:  20,
 		Inventory: []string{},
 		Moves:     DefaultMoves(),
 	}

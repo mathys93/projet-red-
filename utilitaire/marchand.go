@@ -9,7 +9,8 @@ import (
 // MarchandObjets liste les objets vendus par le marchand et leur coût en
 // Fragments.
 var MarchandObjets = map[string]int{
-	"Disque de Pucci":  3,
+	"Potion de vie":    4,
+	"Disque de Pucci":  6,
 	"Potion de poison": 3,
 	"Arrow":            15,
 }
