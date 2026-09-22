@@ -68,18 +68,6 @@ func initCharacter(name, class string, level, maxHP, currentHP int, inventory []
 // INITIALISATION DES MONSTRES
 // ============================================
 
-func initGoblin() Monster {
-	return Monster{
-		Name:        "Gobelin d'entrainement",
-		MaxHP:       40,
-		CurrentHP:   40,
-		Attack:      5,
-		IsBoss:      false,
-		FragmentMin: 2,
-		FragmentMax: 5,
-	}
-}
-
 func initBoss(name string, hp, attack int) Monster {
 	return Monster{
 		Name:        name,
