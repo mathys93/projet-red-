@@ -31,8 +31,11 @@ func SelectZone(w *world.World) *world.Zone {
 				marker = colRed + "❤ " + colReset
 			}
 			status := ""
-			if z.Cleared {
+			switch {
+			case z.Cleared:
 				status = colYellow + "  [zone terminée]" + colReset
+			case w.Locked(z):
+				status = colWhite + "  [verrouillée]" + colReset
 			}
 			fmt.Printf("%s%s%s\n", marker, z.Name, status)
 			fmt.Printf("    %s\n\n", z.Description)
@@ -62,6 +65,10 @@ func SelectZone(w *world.World) *world.Zone {
 			z := w.Zones[selected]
 			if z.Cleared {
 				note = fmt.Sprintf("%s est déjà terminée.", z.Name)
+				continue
+			}
+			if w.Locked(z) {
+				note = fmt.Sprintf("%s est verrouillée : termine d'abord la zone précédente.", z.Name)
 				continue
 			}
 			return z

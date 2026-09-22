@@ -71,6 +71,9 @@ func main() {
 			zone.Cleared = true
 			player.Fragment += fragmentsParBoss
 			fmt.Printf("\nTu gagnes %d Fragments ! (Total : %d)\n", fragmentsParBoss, player.Fragment)
+			for _, msg := range player.GainXP(zone.Boss.XPReward) {
+				fmt.Println(msg)
+			}
 			fmt.Println("Appuie sur Entrée pour continuer...")
 			combat.WaitEnter()
 		case combat.ResultDefeat:
@@ -86,6 +89,9 @@ func main() {
 				result := combat.RunBattle(player, w.BonusBoss)
 				switch result {
 				case combat.ResultVictory, combat.ResultSpared:
+					for _, msg := range player.GainXP(w.BonusBoss.XPReward) {
+						fmt.Println(msg)
+					}
 					fmt.Println("\nFélicitations, tu as terminé le jeu !")
 				case combat.ResultDefeat:
 					fmt.Println("\nGame Over.")

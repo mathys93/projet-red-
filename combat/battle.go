@@ -113,7 +113,8 @@ func DrawStatBar(c *character.Character) {
 	}
 	bar := colYellow + strings.Repeat("■", filled) + colWhite + strings.Repeat("□", barLen-filled) + colReset
 
-	fmt.Printf(" %-14s LV %-3d HP %s %d/%d   MP %d/%d\n", c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP)
+	fmt.Printf(" %-14s LV %-3d HP %s %d/%d   MP %d/%d   XP %d/%d\n",
+		c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP, c.XP, character.XPForLevel(c.Level))
 }
 
 // DrawEnemyBar affiche la barre de PV du boss (façon barre de vie

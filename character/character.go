@@ -85,6 +85,44 @@ func New(name string, level, ap, dp, lp int) *Character {
 // IsAlive indique si le personnage est encore en vie.
 func (c *Character) IsAlive() bool { return c.LP > 0 }
 
+// XPForLevel renvoie l'XP nécessaire pour passer du niveau `level` au
+// niveau suivant. La courbe est volontairement croissante (plus on monte
+// de niveau, plus il faut d'XP) pour que la progression reste sentie sur
+// toute la partie plutôt que de s'aplatir après les premiers combats.
+func XPForLevel(level int) int {
+	return 40 + (level-1)*30
+}
+
+// GainXP ajoute de l'XP au personnage et fait monter son niveau en chaîne
+// (plusieurs niveaux d'un coup si l'XP gagnée est suffisante). Chaque
+// niveau gagné augmente l'Attack/Defense Power et les PV/MP max, et
+// restaure les PV/MP au maximum (une montée de niveau doit se ressentir
+// tout de suite en combat). Renvoie un message par niveau gagné, prêt à
+// être affiché.
+func (c *Character) GainXP(amount int) []string {
+	if amount <= 0 {
+		return nil
+	}
+	c.XP += amount
+
+	var messages []string
+	for c.XP >= XPForLevel(c.Level) {
+		c.XP -= XPForLevel(c.Level)
+		c.Level++
+		c.AP += 2
+		c.DP++
+		c.MaxLP += 15
+		c.MaxMP += 5
+		c.LP = c.MaxLP
+		c.MP = c.MaxMP
+		messages = append(messages, fmt.Sprintf(
+			"%s passe niveau %d ! (AP %d, DP %d, PV max %d, MP max %d)",
+			c.Name, c.Level, c.AP, c.DP, c.MaxLP, c.MaxMP,
+		))
+	}
+	return messages
+}
+
 // TakeDamage applique des dégâts bruts (réduits par la Defense Power) et
 // renvoie les dégâts réellement subis.
 func (c *Character) TakeDamage(raw int) int {

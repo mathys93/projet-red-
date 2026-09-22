@@ -51,6 +51,28 @@ func New() *World {
 	}
 }
 
+// Locked indique si une zone de boss est verrouillée : elle ne devient
+// accessible qu'une fois la zone de boss précédente sur la carte terminée
+// (Cleared), pour que la progression suive l'ordre des zones plutôt que de
+// pouvoir sauter directement au boss le plus fort. La boutique est
+// toujours accessible, et la toute première zone de boss n'est jamais
+// verrouillée.
+func (w *World) Locked(z *Zone) bool {
+	if z.IsShop {
+		return false
+	}
+	var prev *Zone
+	for _, zone := range w.Zones {
+		if zone == z {
+			break
+		}
+		if !zone.IsShop {
+			prev = zone
+		}
+	}
+	return prev != nil && !prev.Cleared
+}
+
 // AllCleared indique si les trois zones de boss ont été nettoyées (boss
 // vaincus ou épargnés), ce qui débloque le boss bonus. La boutique n'est
 // jamais "nettoyée" (ce n'est pas un combat) : elle n'entre pas en compte.

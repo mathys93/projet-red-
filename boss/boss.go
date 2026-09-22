@@ -62,15 +62,16 @@ type ActOption struct {
 // son artwork, et son pattern de combat.
 type Boss struct {
 	*character.Character
-	Art     string
-	Zone    string
-	Pattern Pattern
-	Color   string // teinte ANSI de l'artwork (voir les constantes Color* ci-dessus)
+	Art      string
+	Zone     string
+	Pattern  Pattern
+	Color    string // teinte ANSI de l'artwork (voir les constantes Color* ci-dessus)
+	XPReward int    // XP donnée au joueur à la victoire (voir main.go)
 }
 
 // New construit un boss, charge son artwork depuis le package ascii (par sa
 // clé, ex: "dio") et le redimensionne pour la boîte de combat.
-func New(name string, level, ap, dp, lp int, artKey string, pattern Pattern, color string) *Boss {
+func New(name string, level, ap, dp, lp, xpReward int, artKey string, pattern Pattern, color string) *Boss {
 	raw, ok := ascii.Get(artKey)
 	if !ok {
 		raw = fmt.Sprintf("(art manquant: %q)", artKey)
@@ -86,6 +87,7 @@ func New(name string, level, ap, dp, lp int, artKey string, pattern Pattern, col
 		Art:       ascii.Fit(raw, ArtWidth, ArtHeight),
 		Pattern:   pattern,
 		Color:     color,
+		XPReward:  xpReward,
 	}
 }
 
@@ -105,28 +107,31 @@ func (b *Boss) ActOptions(player *character.Character) []ActOption {
 // la carte.
 // ---------------------------------------------------------------
 
-// Les statistiques ci-dessous sont des valeurs de départ raisonnables
-// (juste de quoi tester le jeu de bout en bout) : à ajuster une fois que
-// tu auras remplacé les patterns par défaut dans patterns.go par le vrai
-// comportement de chaque boss.
+// Les statistiques montent zone après zone : le joueur affronte toujours
+// un boss sensiblement plus fort que le précédent (AP/DP/PV en hausse),
+// pour que la difficulté progresse graduellement avec l'avancée dans le
+// jeu plutôt que de rester plate. Le boss bonus (Pucci), débloqué après
+// les 3 zones, reste le plus fort de tous.
 
-// NewDio crée le boss de la Zone 1.
+// NewDio crée le boss de la Zone 1 : le premier affrontement, pensé pour
+// rester accessible à un joueur qui vient de démarrer.
 func NewDio() *Boss {
-	return New("DIO", 5, 6, 2, 40, "dio", DioPattern{}, ColorYellow)
+	return New("DIO", 5, 6, 2, 40, 40, "dio", DioPattern{}, ColorYellow)
 }
 
-// NewDiavolo crée le boss de la Zone 2.
+// NewDiavolo crée le boss de la Zone 2 : nettement plus costaud que DIO.
 func NewDiavolo() *Boss {
-	return New("Diavolo", 6, 7, 3, 50, "diavolo", DiavoloPattern{}, ColorPurple)
+	return New("Diavolo", 8, 9, 4, 65, 75, "diavolo", DiavoloPattern{}, ColorPurple)
 }
 
-// NewKira crée le boss de la Zone 3.
+// NewKira crée le boss de la Zone 3 : le plus fort des trois zones.
 func NewKira() *Boss {
-	return New("Yoshikage Kira", 6, 6, 3, 45, "kira", KiraPattern{}, ColorCyan)
+	return New("Yoshikage Kira", 11, 12, 5, 90, 120, "kira", KiraPattern{}, ColorCyan)
 }
 
 // NewPucci crée le boss bonus (non assigné à une zone par défaut, voir
-// world.go) : Enrico Pucci et son Disque, débloqué après les 3 zones.
+// world.go) : Enrico Pucci et son Disque, débloqué après les 3 zones,
+// nettement au-dessus des trois autres.
 func NewPucci() *Boss {
-	return New("Enrico Pucci", 8, 8, 4, 70, "pucci", PucciPattern{}, ColorRed)
+	return New("Enrico Pucci", 15, 16, 7, 130, 220, "pucci", PucciPattern{}, ColorRed)
 }
