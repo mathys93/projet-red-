@@ -7,19 +7,11 @@ import (
 	"ProjetRED/character"
 )
 
-// standRoll est un résultat possible de la Flèche (voir rouletteStand
-// ci-dessous) : un nom façon "réveil de Stand", et l'effet appliqué au
-// joueur qui l'utilise.
 type standRoll struct {
 	Name  string
 	Apply func(c *character.Character) string
 }
 
-// rouletteStand est le tirage au sort de la Flèche : comme dans JoJo, elle
-// réveille un Stand aléatoire chez celui qu'elle transperce — parfois un
-// don puissant, parfois un fardeau, et parfois un rejet pur et simple du
-// corps qui la reçoit. L'utiliser est donc un vrai pari, pas un simple soin
-// garanti.
 var rouletteStand = []standRoll{
 	{
 		Name: "Crazy Diamond : soin complet",
@@ -94,8 +86,6 @@ var rouletteStand = []standRoll{
 	},
 }
 
-// useArrow consomme une Flèche (voir combat/items.go) et applique un effet
-// aléatoire de la roulette de Stand ci-dessus.
 func useArrow(player *character.Character) (bool, string) {
 	tirage := rouletteStand[rand.Intn(len(rouletteStand))]
 	effet := tirage.Apply(player)

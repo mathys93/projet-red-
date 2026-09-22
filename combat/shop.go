@@ -7,20 +7,15 @@ import (
 	"strings"
 
 	"ProjetRED/ascii"
-	"ProjetRED/boss"
 	"ProjetRED/character"
 	"ProjetRED/utilitaire"
 )
 
-// RunShop affiche l'écran de la boutique (Zone 4 sur la carte, voir
-// world.New) : marchand / forgeron / partir, et boucle jusqu'à ce que le
-// joueur choisisse de partir (X ou "Partir").
 func RunShop(player *character.Character) {
 	ts := newTerminalSession()
 	defer ts.restore()
 
 	art, _ := ascii.Get("shop")
-	art = ascii.Fit(art, boss.ArtWidth, boss.ArtHeight)
 
 	for {
 		idx, ok := shopChoose(ts, art, "Boutique", []menuItem{
@@ -39,9 +34,6 @@ func RunShop(player *character.Character) {
 	}
 }
 
-// runMarchand affiche le catalogue du marchand et gère l'achat, comme un
-// magasin façon Undertale : liste des objets et leur prix, confirmation à
-// l'écran après achat.
 func runMarchand(ts *terminalSession, player *character.Character, art string) {
 	names := sortedKeys(utilitaire.MarchandObjets)
 
@@ -68,7 +60,6 @@ func runMarchand(ts *terminalSession, player *character.Character, art string) {
 	}
 }
 
-// runForgeron affiche le catalogue du forgeron et gère la fabrication.
 func runForgeron(ts *terminalSession, player *character.Character, art string) {
 	names := sortedKeys(utilitaire.ForgeronObjets)
 
@@ -92,21 +83,20 @@ func runForgeron(ts *terminalSession, player *character.Character, art string) {
 	}
 }
 
-// shopChoose affiche l'artwork de la boutique (teinté en jaune) au-dessus
-// du cadre, la liste `items` en grille à deux colonnes DANS le cadre (voir
-// combat.DrawOptionGrid), sur le même modèle que chooseOption (voir
-// combat/submenu.go).
 func shopChoose(ts *terminalSession, art, title string, items []menuItem) (idx int, ok bool) {
 	selected := 0
 	for {
 		clearScreen()
-		bw := boxWidth(boss.ArtWidth + 4)
-		bh := boss.ArtHeight + 2
-		artHeight := len(strings.Split(art, "\n"))
+		bw, bh, aw, ah := layout()
+		if needed := (len(items)+1)/2 + 2; needed > bh {
+			bh = needed
+		}
+		shown := ascii.Fit(art, aw, ah)
+		artHeight := len(strings.Split(shown, "\n"))
 		printPadding(artHeight + bh + 6)
 		fmt.Println()
 		fmt.Println(colYellow + "  " + title + colReset)
-		DrawArt(bw, art, colYellow)
+		DrawArt(bw, shown, colYellow)
 		DrawOptionGrid(bw, bh, items, selected)
 		desc := ""
 		if selected < len(items) {
@@ -114,7 +104,7 @@ func shopChoose(ts *terminalSession, art, title string, items []menuItem) (idx i
 		}
 		fmt.Println(colWhite + "* " + desc + colReset)
 		fmt.Println()
-		fmt.Println(colWhite + "(Z/S/Q/D pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour quitter)" + colReset)
+		fmt.Println(colWhite + "(← ↑ ↓ → pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour quitter)" + colReset)
 
 		key := ts.readKey()
 		switch key {
@@ -146,9 +136,6 @@ func shopChoose(ts *terminalSession, art, title string, items []menuItem) (idx i
 	}
 }
 
-// sortedKeys renvoie les clés d'une map d'objets, triées par ordre
-// alphabétique pour un affichage stable (l'ordre d'itération d'une map Go
-// n'est pas garanti).
 func sortedKeys(m map[string]int) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {

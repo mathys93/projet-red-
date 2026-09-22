@@ -6,7 +6,6 @@ import (
 	"ProjetRED/character"
 )
 
-// PrintInventory affiche le contenu de l'inventaire d'un personnage.
 func PrintInventory(c *character.Character) {
 	if len(c.Inventory) == 0 {
 		fmt.Println("Inventaire vide.")
@@ -18,8 +17,6 @@ func PrintInventory(c *character.Character) {
 	}
 }
 
-// TakeHealingPotion consomme une "Potion de vie" de l'inventaire (si
-// présente) et restaure 50 PV.
 func TakeHealingPotion(c *character.Character) {
 	if !c.RemoveItem("Potion de vie") {
 		fmt.Println("Vous n'avez pas de potion de vie !")
@@ -29,18 +26,6 @@ func TakeHealingPotion(c *character.Character) {
 	fmt.Printf("Vous utilisez Potion de vie. PV : %d / %d\n", c.LP, c.MaxLP)
 }
 
-// UseInventory ouvre un menu texte (hors combat) pour choisir un objet à
-// utiliser dans l'inventaire, et déclenche son effet.
-//
-// Note : cette fonction utilise fmt.Scanln (son propre buffer sur
-// os.Stdin), séparé de celui du package combat (stdinScanner). Ça ne pose
-// aucun problème tant qu'elle n'est pas appelée entre deux lectures du
-// package combat (carte / combat) dans la même exécution. Si tu l'intègres
-// un jour dans la boucle de jeu principale (entre deux zones, par
-// exemple), fais-la lire au clavier via combat.WaitEnter()/le mécanisme du
-// package combat plutôt que fmt.Scanln, pour la même raison que documentée
-// dans combat/input.go (deux buffers différents sur le même os.Stdin =
-// entrées perdues).
 func UseInventory(c *character.Character) {
 	if len(c.Inventory) == 0 {
 		fmt.Println("Votre inventaire est vide.")

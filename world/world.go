@@ -1,28 +1,20 @@
-// Package world définit la carte du jeu : trois zones, chacune gardée par
-// un boss. Un quatrième boss (Pucci) est disponible en tant que boss bonus,
-// débloqué une fois les trois zones nettoyées.
 package world
 
 import "ProjetRED/boss"
 
-// Zone représente une zone de la carte. La plupart gardent un boss, mais
-// une zone peut aussi être une boutique (IsShop) : Boss est alors nil, et
-// elle reste toujours visitable (jamais marquée Cleared).
 type Zone struct {
 	Name        string
 	Description string
-	Boss        *boss.Boss // nil quand IsShop est vrai
+	Boss        *boss.Boss
 	Cleared     bool
 	IsShop      bool
 }
 
-// World contient les zones de la carte et le boss bonus.
 type World struct {
 	Zones     []*Zone
-	BonusBoss *boss.Boss // débloqué quand toutes les zones sont Cleared
+	BonusBoss *boss.Boss
 }
 
-// New construit la carte à trois zones utilisée par le jeu.
 func New() *World {
 	return &World{
 		Zones: []*Zone{
@@ -51,12 +43,6 @@ func New() *World {
 	}
 }
 
-// Locked indique si une zone de boss est verrouillée : elle ne devient
-// accessible qu'une fois la zone de boss précédente sur la carte terminée
-// (Cleared), pour que la progression suive l'ordre des zones plutôt que de
-// pouvoir sauter directement au boss le plus fort. La boutique est
-// toujours accessible, et la toute première zone de boss n'est jamais
-// verrouillée.
 func (w *World) Locked(z *Zone) bool {
 	if z.IsShop {
 		return false
@@ -73,9 +59,6 @@ func (w *World) Locked(z *Zone) bool {
 	return prev != nil && !prev.Cleared
 }
 
-// AllCleared indique si les trois zones de boss ont été nettoyées (boss
-// vaincus ou épargnés), ce qui débloque le boss bonus. La boutique n'est
-// jamais "nettoyée" (ce n'est pas un combat) : elle n'entre pas en compte.
 func (w *World) AllCleared() bool {
 	for _, z := range w.Zones {
 		if z.IsShop {

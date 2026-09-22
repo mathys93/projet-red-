@@ -6,28 +6,6 @@ import (
 	"ProjetRED/character"
 )
 
-// ===================================================================
-//  PATTERNS DES BOSS
-//
-//  C'est ICI que tu personnalises le comportement de chaque boss
-//  (attaques spéciales, esquives, dialogues, phases...). Chaque type
-//  ci-dessous implémente l'interface Pattern (voir boss.go) :
-//
-//    Act(turn, self, player)     -> ce qui se passe au tour du boss
-//    ActOptions(self, player)    -> les sous-options du menu ACT (une par
-//                                   action "lore" possible : parler,
-//                                   observer, chanter...)
-//
-//  Pour l'instant Act() se contente d'une riposte simple (DefaultPattern) :
-//  remplace son corps par la vraie logique du boss (patterns d'esquive,
-//  projectiles ASCII qui bougent, attaques qui changent selon les PV
-//  restants, etc.) sans toucher au reste du programme (combat, map...).
-//  Les ActOptions ci-dessous sont déjà écrites avec du texte propre à
-//  chaque boss : ajoute/retire des options si tu veux enrichir le lore.
-// ===================================================================
-
-// DefaultPattern : comportement de base utilisé si un boss n'a pas encore
-// de pattern personnalisé, ou en secours depuis les patterns ci-dessous.
 type DefaultPattern struct{}
 
 func (DefaultPattern) Act(turn int, self *Boss, player *character.Character) string {
@@ -47,12 +25,6 @@ func (DefaultPattern) ActOptions(self *Boss, player *character.Character) []ActO
 	}
 }
 
-// --- Zone 1 : DIO ---------------------------------------------------
-// Pattern de DIO (Stand "The World") : deux tours de mise en jambe, puis un
-// troisième tour où le temps s'arrête - un coup lourd qui ignore totalement
-// la Defense Power. Le deuxième tour sert de signal clair ("il prépare
-// quelque chose") : c'est le moment de se soigner avant l'impact plutôt que
-// de continuer à frapper aveuglément.
 type DioPattern struct{}
 
 func (p DioPattern) Act(turn int, self *Boss, player *character.Character) string {
@@ -99,13 +71,6 @@ func (p DioPattern) ActOptions(self *Boss, player *character.Character) []ActOpt
 	}
 }
 
-// --- Zone 2 : Diavolo -------------------------------------------------
-// Pattern de Diavolo (Stand "King Crimson") : tous les 4 tours, il "efface"
-// quelques secondes de dégâts en se soignant d'une fraction de ses PV max,
-// ce qui punit un joueur qui grignote lentement au lieu de concentrer ses
-// coups les plus forts (Attaque de Stand). Sous 1/3 de ses PV, il s'enrage
-// et frappe plus fort - le combat devient plus dangereux juste avant la
-// victoire, pas plus facile.
 type DiavoloPattern struct{}
 
 func (p DiavoloPattern) Act(turn int, self *Boss, player *character.Character) string {
@@ -163,12 +128,6 @@ func (p DiavoloPattern) ActOptions(self *Boss, player *character.Character) []Ac
 	}
 }
 
-// --- Zone 3 : Yoshikage Kira -------------------------------------------
-// Pattern de Kira (Stand "Killer Queen") : ses bombes rendent ses dégâts
-// normaux croissants avec la durée du combat, et tous les 4 tours "Sheer
-// Heart Attack" fonce en ligne droite pour un coup garanti qui ignore la
-// Defense Power. Un joueur qui s'éternise à soigner au lieu de finir le
-// combat rapidement se fait rattraper par des dégâts de plus en plus lourds.
 type KiraPattern struct{}
 
 func (p KiraPattern) Act(turn int, self *Boss, player *character.Character) string {
@@ -212,12 +171,6 @@ func (p KiraPattern) ActOptions(self *Boss, player *character.Character) []ActOp
 	}
 }
 
-// --- Boss bonus : Enrico Pucci (Disque) --------------------------------
-// Pattern de Pucci (Stand "Made in Heaven") : le plus complet des quatre,
-// il cumule le soin périodique de Diavolo (tous les 4 tours), le coup
-// garanti ignorant la Defense Power de DIO/Kira (tous les 5 tours, "le
-// temps accélère") et l'enrage à PV bas. Gérer les trois mécaniques à la
-// fois - sans jamais pouvoir se relâcher - est le vrai test du boss bonus.
 type PucciPattern struct{}
 
 func (p PucciPattern) Act(turn int, self *Boss, player *character.Character) string {

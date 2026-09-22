@@ -8,8 +8,6 @@ import (
 	"ProjetRED/character"
 )
 
-// itemDescription renvoie une courte description affichée dans le sous-menu
-// ITEM pour un objet connu (vide si l'objet n'a pas de description dédiée).
 func itemDescription(item string) string {
 	switch item {
 	case "Potion de vie", "Disque de Pucci":
@@ -22,11 +20,6 @@ func itemDescription(item string) string {
 	return ""
 }
 
-// itemMenuItems construit les entrées du sous-menu ITEM à partir de
-// l'inventaire du joueur, en regroupant les exemplaires identiques
-// ("Potion de vie x2") pour ne pas afficher une ligne par exemplaire.
-// Le deuxième slice renvoyé donne, pour chaque entrée du menu, le nom de
-// l'objet correspondant (même index).
 func itemMenuItems(player *character.Character) ([]menuItem, []string) {
 	var names []string
 	counts := map[string]int{}
@@ -48,10 +41,6 @@ func itemMenuItems(player *character.Character) ([]menuItem, []string) {
 	return items, names
 }
 
-// useItem consomme un objet de l'inventaire pendant un combat et applique
-// son effet, en animant la barre de PV concernée (voir animateHPChange) au
-// lieu de sauter directement au résultat final. Renvoie false (sans
-// consommer l'objet ni le tour) si l'objet ne peut pas être utilisé ici.
 func useItem(b *boss.Boss, player *character.Character, item string) (bool, string) {
 	switch item {
 	case "Potion de vie", "Disque de Pucci":

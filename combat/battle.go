@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"ProjetRED/ascii"
 	"ProjetRED/boss"
 	"ProjetRED/character"
 )
 
-// Couleurs ANSI (façon boîte de dialogue Undertale : blanc/jaune/rouge).
 const (
 	colReset  = "\033[0m"
 	colWhite  = "\033[97m"
@@ -18,20 +18,13 @@ const (
 )
 
 func clearScreen() {
-	fmt.Print("\033[2J\033[H\033[?25l") // efface l'écran + cache le curseur
+	fmt.Print("\033[2J\033[H\033[?25l")
 }
 
-// MaximizeConsoleWindow agrandit la fenêtre de la console au maximum, si
-// possible (voir combat/termsize_windows.go). Appelée une fois au tout
-// début du programme (voir main.go).
 func MaximizeConsoleWindow() {
 	maximizeConsoleWindow()
 }
 
-// terminalSize renvoie la taille (colonnes, lignes) du terminal actuel,
-// avec un repli raisonnable quand elle ne peut pas être détectée (terminal
-// sans fenêtre propre, sortie redirigée...), pour que l'affichage puisse
-// toujours calculer une mise en page plutôt que planter.
 func terminalSize() (cols, rows int) {
 	cols, rows = queryTerminalSize()
 	if cols < 40 {
@@ -43,22 +36,44 @@ func terminalSize() (cols, rows int) {
 	return cols, rows
 }
 
-// boxWidth calcule la largeur de la boîte de combat/boutique pour qu'elle
-// remplisse (quasi) toute la largeur du terminal, façon Undertale en plein
-// écran, plutôt que de rester à sa taille minimale dans un coin de l'écran.
-// Elle ne descend jamais sous minWidth (la taille requise par l'artwork).
-func boxWidth(minWidth int) int {
-	cols, _ := terminalSize()
-	w := cols - 4
-	if w < minWidth {
-		w = minWidth
+const (
+	minBoxWidth   = 66
+	minBoxHeight  = 8
+	minArtHeight  = 6
+	battleChrome  = 12
+	tallTerminal  = 46
+	tallBoxHeight = 10
+)
+
+func layout() (boxW, boxH, artW, artH int) {
+	cols, rows := terminalSize()
+
+	boxW = cols - 4
+	if boxW < minBoxWidth {
+		boxW = minBoxWidth
 	}
-	return w
+
+	boxH = minBoxHeight
+	if rows >= tallTerminal {
+		boxH = tallBoxHeight
+	}
+
+	artH = rows - 1 - battleChrome - boxH
+	for artH < minArtHeight && boxH > 5 {
+		boxH--
+		artH++
+	}
+	if artH < minArtHeight {
+		artH = minArtHeight
+	}
+
+	return boxW, boxH, boxW, artH
 }
 
-// printPadding centre verticalement le contenu d'un écran (contentHeight
-// lignes) en imprimant des lignes vides au-dessus, plutôt que de le laisser
-// collé en haut du terminal avec tout le reste de l'écran vide en dessous.
+func fitArt(b *boss.Boss, artW, artH int) string {
+	return ascii.Fit(b.Art, artW, artH)
+}
+
 func printPadding(contentHeight int) {
 	_, rows := terminalSize()
 	pad := (rows - contentHeight) / 2
@@ -67,10 +82,6 @@ func printPadding(contentHeight int) {
 	}
 }
 
-// visibleWidth renvoie la largeur "à l'écran" d'une chaîne pouvant contenir
-// des codes couleur ANSI (\033[...m), en ignorant ces codes pour le calcul.
-// Sans ça, tout padding calculé sur une chaîne déjà colorée serait faussé
-// par les octets de couleur (invisibles mais comptés par len/[]rune).
 func visibleWidth(s string) int {
 	n := 0
 	inEsc := false
@@ -89,10 +100,6 @@ func visibleWidth(s string) int {
 	return n
 }
 
-// drawFrameTop/drawFrameLine/drawFrameBottom dessinent le cadre de combat,
-// brique par brique : un cadre vide (voir DrawEmptyBox) ou rempli d'une
-// grille d'options (voir DrawOptionGrid) sont tous les deux construits à
-// partir de ces trois fonctions.
 func drawFrameTop(width int) {
 	fmt.Println(colWhite + "┌" + strings.Repeat("─", width-2) + "┐" + colReset)
 }
@@ -101,8 +108,6 @@ func drawFrameBottom(width int) {
 	fmt.Println(colWhite + "└" + strings.Repeat("─", width-2) + "┘" + colReset)
 }
 
-// drawFrameLine imprime une ligne de contenu (déjà colorée) à l'intérieur
-// du cadre, complétée par des espaces jusqu'à occuper toute la largeur.
 func drawFrameLine(width int, content string) {
 	pad := width - 2 - visibleWidth(content)
 	if pad < 0 {
@@ -111,11 +116,6 @@ func drawFrameLine(width int, content string) {
 	fmt.Println(colWhite + "│" + colReset + content + strings.Repeat(" ", pad) + colWhite + "│" + colReset)
 }
 
-// DrawArt affiche l'artwork du boss centré, SEUL, au-dessus du cadre de
-// combat (voir DrawEmptyBox/DrawOptionGrid pour le cadre lui-même). Avant,
-// l'artwork était dessiné à l'intérieur du cadre, qui restait donc
-// inutilisable pour autre chose : il est maintenant sorti au-dessus, et le
-// cadre sert de zone d'affichage pour les sous-menus FIGHT/ACT/ITEM.
 func DrawArt(width int, art string, artColor string) {
 	if artColor == "" {
 		artColor = colWhite
@@ -129,9 +129,6 @@ func DrawArt(width int, art string, artColor string) {
 	}
 }
 
-// DrawEmptyBox dessine un cadre vide de la taille donnée : c'est ce que
-// devient la boîte de combat en dehors des sous-menus (voir DrawArt pour
-// où est passé l'artwork).
 func DrawEmptyBox(width, height int) {
 	drawFrameTop(width)
 	for i := 0; i < height-2; i++ {
@@ -140,12 +137,6 @@ func DrawEmptyBox(width, height int) {
 	drawFrameBottom(width)
 }
 
-// DrawOptionGrid dessine les entrées d'un sous-menu (coups de FIGHT,
-// options ACT, objets d'ITEM...) en grille à deux colonnes À L'INTÉRIEUR
-// du cadre de combat, façon inventaire Undertale (ex : Potion de vie en
-// haut à droite, Disque de Pucci en haut à gauche...), plutôt qu'une
-// simple liste verticale. La description de l'entrée sélectionnée est
-// affichée par l'appelant, sous le cadre (voir combat/submenu.go).
 func DrawOptionGrid(width, height int, items []menuItem, selected int) {
 	drawFrameTop(width)
 
@@ -192,10 +183,6 @@ func DrawOptionGrid(width, height int, items []menuItem, selected int) {
 	drawFrameBottom(width)
 }
 
-// DrawActionButtons affiche FIGHT / ACT / ITEM / MERCY sous forme de gros
-// boutons encadrés, répartis sur toute la largeur du cadre (façon boutons
-// d'action d'Undertale), plutôt qu'une simple ligne de texte compacte.
-// Le bouton sélectionné est mis en évidence en rouge avec un cœur.
 func DrawActionButtons(width int, selected int) {
 	options := []string{"FIGHT", "ACT", "ITEM", "MERCY"}
 	hotkeys := []string{"1/F", "2/A", "3/I", "4/M"}
@@ -208,9 +195,9 @@ func DrawActionButtons(width int, selected int) {
 			inner = n
 		}
 	}
-	inner += 4 // marge intérieure du bouton (cœur/marqueur + espacement)
+	inner += 4
 
-	btnOuter := inner + 2 // + les deux bordures verticales du bouton
+	btnOuter := inner + 2
 	gap := (width - len(options)*btnOuter) / (len(options) + 1)
 	if gap < 2 {
 		gap = 2
@@ -248,8 +235,6 @@ func DrawActionButtons(width int, selected int) {
 	fmt.Println(bot.String())
 }
 
-// DrawStatBar affiche "Nom  LV x  HP [■■■□□] cur/max  MP cur/max" façon
-// Undertale (le MP en plus sert aux attaques de Stand du menu FIGHT).
 func DrawStatBar(c *character.Character) {
 	barLen := 20
 	filled := 0
@@ -265,9 +250,6 @@ func DrawStatBar(c *character.Character) {
 		c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP, c.XP, character.XPForLevel(c.Level))
 }
 
-// DrawEnemyBar affiche la barre de PV du boss (façon barre de vie
-// d'adversaire), pour qu'on voie clairement ses PV baisser pendant le
-// combat, comme pour le joueur avec DrawStatBar.
 func DrawEnemyBar(b *boss.Boss) {
 	barLen := 20
 	filled := 0
@@ -285,14 +267,11 @@ func DrawEnemyBar(b *boss.Boss) {
 	fmt.Printf(" %-14s LV %-3d HP %s %d/%d\n", b.Name, b.Level, bar, b.LP, b.MaxLP)
 }
 
-// RenderBattleScreen redessine l'écran complet (artwork + cadre vide +
-// gros boutons d'action) à chaque frame où c'est au joueur de choisir son
-// action.
 func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int, message string) {
 	clearScreen()
-	bw := boxWidth(boss.ArtWidth + 4)
-	bh := boss.ArtHeight + 2
-	artHeight := len(strings.Split(b.Art, "\n"))
+	bw, bh, aw, ah := layout()
+	art := fitArt(b, aw, ah)
+	artHeight := len(strings.Split(art, "\n"))
 	contentHeight := artHeight + bh + 11
 	if message != "" {
 		contentHeight++
@@ -300,7 +279,7 @@ func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int,
 	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawArt(bw, b.Art, b.Color)
+	DrawArt(bw, art, b.Color)
 	DrawEmptyBox(bw, bh)
 	fmt.Println()
 	DrawEnemyBar(b)
@@ -309,19 +288,14 @@ func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int,
 	}
 	DrawStatBar(player)
 	DrawActionButtons(bw, selected)
-	fmt.Println(colWhite + "\n(Q/D ou raccourci direct pour choisir, Entrée pour valider, X pour quitter)" + colReset)
+	fmt.Println(colWhite + "\n(← → pour choisir, Entrée pour valider, F/A/I/M en raccourci, X pour quitter)" + colReset)
 }
 
-// RenderTurnMessage affiche l'artwork, le cadre vide et un message SANS le
-// menu d'actions : utilisé pour bien séparer visuellement le tour du
-// joueur et celui du boss (façon Undertale, où le menu disparaît pendant
-// les attaques), plutôt que de résoudre les deux tours d'un coup dans le
-// même message comme avant.
 func RenderTurnMessage(b *boss.Boss, player *character.Character, message string) {
 	clearScreen()
-	bw := boxWidth(boss.ArtWidth + 4)
-	bh := boss.ArtHeight + 2
-	artHeight := len(strings.Split(b.Art, "\n"))
+	bw, bh, aw, ah := layout()
+	art := fitArt(b, aw, ah)
+	artHeight := len(strings.Split(art, "\n"))
 	contentHeight := artHeight + bh + 7
 	if message != "" {
 		contentHeight++
@@ -329,7 +303,7 @@ func RenderTurnMessage(b *boss.Boss, player *character.Character, message string
 	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawArt(bw, b.Art, b.Color)
+	DrawArt(bw, art, b.Color)
 	DrawEmptyBox(bw, bh)
 	fmt.Println()
 	DrawEnemyBar(b)
@@ -340,10 +314,6 @@ func RenderTurnMessage(b *boss.Boss, player *character.Character, message string
 	fmt.Println(colWhite + "\n(Entrée pour continuer, X pour quitter)" + colReset)
 }
 
-// animateHPChange anime la barre de PV du joueur (isPlayer = true) ou du
-// boss entre `before` et `after`, en redessinant l'écran de tour par petits
-// pas espacés d'un court délai, pour qu'on voie vraiment les PV baisser (ou
-// remonter) au lieu de sauter directement à la valeur finale.
 func animateHPChange(b *boss.Boss, player *character.Character, isPlayer bool, before, after int, message string) {
 	if before == after {
 		RenderTurnMessage(b, player, message)
@@ -372,18 +342,10 @@ func animateHPChange(b *boss.Boss, player *character.Character, isPlayer bool, b
 	RenderTurnMessage(b, player, message)
 }
 
-// waitContinue attend une validation du joueur pour laisser le temps de
-// lire le message affiché par RenderTurnMessage. Renvoie false si le
-// joueur quitte (X) pendant cette pause, pour que RunBattle propage la
-// sortie du combat.
 func waitContinue(ts *terminalSession) bool {
 	return ts.readKey() != KeyQuit
 }
 
-// tryResurrect annule une mort du joueur s'il porte le charme de
-// résurrection posé par la Flèche (voir combat/arrow.go, King Crimson) : il
-// revient avec un tiers de ses PV max, le charme consommé. Renvoie false
-// (rien à faire) si le joueur est encore en vie ou ne porte pas le charme.
 func tryResurrect(player *character.Character) bool {
 	if player.IsAlive() || !player.HasResurrectCharm {
 		return false
@@ -396,7 +358,6 @@ func tryResurrect(player *character.Character) bool {
 	return true
 }
 
-// Result indique comment un combat s'est terminé.
 type Result int
 
 const (
@@ -406,10 +367,6 @@ const (
 	ResultQuit
 )
 
-// mainMenuHotkeys associe un raccourci direct (chiffre ou lettre, en plus
-// de la navigation Q/D + Entrée) à chaque option du menu FIGHT/ACT/ITEM/
-// MERCY, pour pouvoir sauter directement dessus en une seule saisie
-// (ex: taper "a" va droit à ACT sans avoir à naviguer jusque-là).
 var mainMenuHotkeys = map[string]int{
 	"f": 0, "1": 0,
 	"a": 1, "2": 1,
@@ -417,15 +374,6 @@ var mainMenuHotkeys = map[string]int{
 	"m": 3, "4": 3,
 }
 
-// RunBattle lance un combat interactif façon Undertale entre le joueur et
-// un boss, et renvoie comment le combat s'est terminé.
-//
-// Chaque tour se déroule en deux temps bien séparés à l'écran (au lieu
-// d'être résolus d'un coup dans le même message) : d'abord le tour du
-// joueur (choix dans FIGHT/ACT/ITEM/MERCY puis résultat affiché seul),
-// ensuite - une fois validé - le tour du boss (délégué à son Pattern, voir
-// boss/patterns.go), affiché séparément avant de repasser la main au
-// joueur.
 func RunBattle(player *character.Character, b *boss.Boss) Result {
 	ts := newTerminalSession()
 	defer ts.restore()
@@ -436,8 +384,6 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 
 	for player.IsAlive() && b.IsAlive() {
 		if player.StunnedTurns > 0 {
-			// Enraciné (voir combat/arrow.go, Hermit Purple) : le tour est
-			// perdu sans passer par le menu, mais le boss agit quand même.
 			player.StunnedTurns--
 			message = "Tu es enraciné(e), impossible d'agir ce tour-ci !"
 		} else {
@@ -466,7 +412,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 
 			acted := true
 			switch chosen {
-			case 0: // FIGHT : choix de l'attaque (coup de poing, Stand...).
+			case 0:
 				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
 				if !ok {
 					acted = false
@@ -482,7 +428,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 				before := b.LP
 				message = move.Perform(player, b.Character)
 				animateHPChange(b, player, false, before, b.LP, message)
-			case 1: // ACT : choix de l'action "lore" (parler, observer...).
+			case 1:
 				options := b.ActOptions(player)
 				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
 				if !ok {
@@ -490,7 +436,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 					break
 				}
 				message = options[idx].Resolve(b, player)
-			case 2: // ITEM : choix de l'objet à utiliser dans l'inventaire.
+			case 2:
 				if len(player.Inventory) == 0 {
 					message = "Ton inventaire est vide !"
 					acted = false
@@ -507,16 +453,13 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 				if !used {
 					acted = false
 				}
-			case 3: // MERCY
+			case 3:
 				message = fmt.Sprintf("Tu épargnes %s...", b.Name)
 				RenderBattleScreen(b, player, selected, message)
 				return ResultSpared
 			}
 
 			if !acted {
-				// Choix annulé (X) ou impossible (pas assez de MP, inventaire
-				// vide...) : on reste au menu principal, le tour du boss
-				// n'est pas déclenché.
 				continue
 			}
 		}
@@ -533,8 +476,6 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 		}
 
 		if !player.IsAlive() {
-			// Un objet utilisé au tour du joueur (ex: Potion de poison) peut
-			// l'achever avant même le tour du boss.
 			if tryResurrect(player) {
 				RenderTurnMessage(b, player, fmt.Sprintf("Le futur où tu meurs a été effacé ! Tu reviens avec %d PV.", player.LP))
 				waitContinue(ts)
@@ -545,8 +486,6 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 			}
 		}
 
-		// Le tour du boss, affiché à part : c'est là que chaque boss aura
-		// son propre comportement (voir boss/patterns.go).
 		RenderTurnMessage(b, player, fmt.Sprintf("-- Tour de %s --", b.Name))
 		if !waitContinue(ts) {
 			return ResultQuit

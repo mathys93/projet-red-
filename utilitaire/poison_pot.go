@@ -7,8 +7,6 @@ import (
 	"ProjetRED/character"
 )
 
-// ApplyPoisonPotion inflige 10 dégâts par seconde pendant 3 secondes,
-// directement sur les PV (le poison ignore la Defense Power).
 func ApplyPoisonPotion(c *character.Character) {
 	fmt.Println("--- Effet de la potion de poison ---")
 	for i := 1; i <= 3; i++ {
@@ -21,7 +19,6 @@ func ApplyPoisonPotion(c *character.Character) {
 	}
 }
 
-// BuyPoisonPotion simule l'achat d'une Potion de poison chez le marchand.
 func BuyPoisonPotion(c *character.Character) {
 	c.AddItem("Potion de poison")
 	fmt.Println("Vous avez acheté une Potion de poison et l'avez ajoutée à votre inventaire.")

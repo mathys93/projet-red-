@@ -6,14 +6,12 @@ import (
 	"ProjetRED/character"
 )
 
-// ForgeronObjets liste les équipements fabricables et leur coût en Fragments.
 var ForgeronObjets = map[string]int{
 	"Chapeau de l'aventurier": 5,
 	"Tunique de l'aventurier": 5,
 	"Bottes de l'aventurier":  5,
 }
 
-// forgeronRessources liste les matériaux nécessaires à chaque fabrication.
 var forgeronRessources = map[string]map[string]int{
 	"Chapeau de l'aventurier": {
 		"Plume de Corbeau": 1,
@@ -29,7 +27,6 @@ var forgeronRessources = map[string]map[string]int{
 	},
 }
 
-// possedeRessources vérifie que le joueur a tous les matériaux nécessaires.
 func possedeRessources(c *character.Character, item string) bool {
 	for ressource, quantite := range forgeronRessources[item] {
 		if c.CountItem(ressource) < quantite {
@@ -41,8 +38,6 @@ func possedeRessources(c *character.Character, item string) bool {
 	return true
 }
 
-// PeutFabriquer vérifie que l'objet existe, que le joueur a assez de
-// Fragments, les ressources nécessaires, et de la place dans l'inventaire.
 func PeutFabriquer(c *character.Character, item string) bool {
 	prix, existe := ForgeronObjets[item]
 	if !existe {
@@ -68,8 +63,6 @@ func PeutFabriquer(c *character.Character, item string) bool {
 	return true
 }
 
-// Fabriquer gère la fabrication d'un équipement chez le forgeron : consomme
-// les Fragments, retire les ressources, puis ajoute l'objet fabriqué.
 func Fabriquer(c *character.Character, item string) {
 	if !PeutFabriquer(c, item) {
 		fmt.Println("Fabrication impossible.")

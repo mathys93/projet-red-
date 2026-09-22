@@ -5,10 +5,6 @@ import (
 	"math/rand"
 )
 
-// ============================================
-// STRUCTURES
-// ============================================
-
 type Equipment struct {
 	Head  string
 	Chest string
@@ -28,7 +24,6 @@ type Character struct {
 	Skill        []string
 	Equipment    Equipment
 
-	// état de combat (roulette de Stand)
 	SkipOpponentNextTurn bool
 	StunnedTurns         int
 	HasResurrectCharm    bool
@@ -45,10 +40,6 @@ type Monster struct {
 	FragmentMax int
 }
 
-// ============================================
-// INITIALISATION DU PERSONNAGE
-// ============================================
-
 func initCharacter(name, class string, level, maxHP, currentHP int, inventory []string) Character {
 	return Character{
 		Name:         name,
@@ -63,10 +54,6 @@ func initCharacter(name, class string, level, maxHP, currentHP int, inventory []
 		Skill:        []string{"Coup de poing"},
 	}
 }
-
-// ============================================
-// INITIALISATION DES MONSTRES
-// ============================================
 
 func initGoblin() Monster {
 	return Monster{
@@ -91,10 +78,6 @@ func initBoss(name string, hp, attack int) Monster {
 		FragmentMax: 40,
 	}
 }
-
-// ============================================
-// INVENTAIRE
-// ============================================
 
 func addInventory(c *Character, item string) bool {
 	if len(c.Inventory) >= c.InventoryMax {
@@ -126,11 +109,6 @@ func accessInventory(c *Character) {
 	}
 }
 
-// ============================================
-// FRAGMENTS — obtention limitée, drop différencié monstre / boss
-// ============================================
-
-// giveFragments ajoute des Fragments au joueur en respectant la limite max (FragmentMax)
 func giveFragments(c *Character, montant int) {
 	c.Fragment += montant
 	if c.Fragment > c.FragmentMax {
@@ -139,8 +117,6 @@ func giveFragments(c *Character, montant int) {
 	}
 }
 
-// dropFragments calcule et donne les Fragments obtenus après la mort d'un monstre ou boss
-// Le montant dépend de FragmentMin/FragmentMax propres à chaque monstre (drop différent selon IsBoss)
 func dropFragments(c *Character, m Monster) {
 	montant := m.FragmentMin + rand.Intn(m.FragmentMax-m.FragmentMin+1)
 
@@ -153,10 +129,6 @@ func dropFragments(c *Character, m Monster) {
 	giveFragments(c, montant)
 	fmt.Printf("Fragments : %d / %d\n", c.Fragment, c.FragmentMax)
 }
-
-// ============================================
-// POTIONS
-// ============================================
 
 func takePot(c *Character) {
 	if !removeInventory(c, "Disque de Pucci") {
@@ -182,13 +154,8 @@ func poisonPot(c *Character) {
 			c.CurrentHP = 0
 		}
 		fmt.Printf("PV : %d / %d\n", c.CurrentHP, c.MaxHP)
-		// time.Sleep(1 * time.Second) // décommente + importe "time" pour le vrai délai
 	}
 }
-
-// ============================================
-// SORTS
-// ============================================
 
 func contientSort(c *Character, sort string) bool {
 	for _, s := range c.Skill {
@@ -207,10 +174,6 @@ func spellBook(c *Character) {
 	c.Skill = append(c.Skill, "Onde Solaire")
 	fmt.Println("Tu as appris : Onde Solaire !")
 }
-
-// ============================================
-// MARCHAND — payé en Fragments
-// ============================================
 
 var marchandObjets = map[string]int{
 	"Disque de Pucci":              3,
@@ -284,10 +247,6 @@ func menuMarchand(c *Character) {
 	}
 }
 
-// ============================================
-// FORGERON — vente directe d'armures, payé en Fragments
-// ============================================
-
 var forgeronObjets = map[string]int{
 	"Chapeau de Gyro Zeppeli": 8,
 	"Haut de Giorno":          10,
@@ -341,10 +300,6 @@ func menuForgeron(c *Character) {
 	}
 }
 
-// ============================================
-// ÉQUIPEMENT
-// ============================================
-
 func bonusHPPourItem(item string) int {
 	switch item {
 	case "Chapeau de Gyro Zeppeli":
@@ -389,10 +344,6 @@ func equiperArmure(c *Character, item string) {
 	fmt.Printf("Tu équipes %s ! PV max : %d\n", item, c.MaxHP)
 }
 
-// ============================================
-// RÉDUCTION DE DÉGÂTS PAR ARMURE
-// ============================================
-
 func calculateDamageReduction(c *Character) float64 {
 	reduction := 0.0
 	if c.Equipment.Head != "" {
@@ -427,10 +378,6 @@ func applyDamageToCharacter(c *Character, degats int) int {
 	return degatsReels
 }
 
-// ============================================
-// AUGMENTATION D'INVENTAIRE
-// ============================================
-
 var upgradesUtilisees int
 
 func upgradeInventorySlot(c *Character) bool {
@@ -443,10 +390,6 @@ func upgradeInventorySlot(c *Character) bool {
 	fmt.Printf("Capacité d'inventaire augmentée ! Nouvelle limite : %d\n", c.InventoryMax)
 	return true
 }
-
-// ============================================
-// ROULETTE DE STAND (Arrow)
-// ============================================
 
 type StandEffect struct {
 	Name  string

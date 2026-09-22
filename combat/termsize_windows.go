@@ -32,10 +32,6 @@ type consoleScreenBufferInfo struct {
 	MaximumWindowSize coord
 }
 
-// queryTerminalSize lit la taille de la fenêtre console réellement visible
-// (pas celle du buffer de défilement, qui peut être bien plus grande) via
-// l'API Windows, pour que l'affichage puisse remplir tout l'écran plutôt
-// que de rester coincé dans un coin façon boîte figée.
 func queryTerminalSize() (cols, rows int) {
 	var info consoleScreenBufferInfo
 	handle := syscall.Handle(os.Stdout.Fd())
@@ -48,11 +44,6 @@ func queryTerminalSize() (cols, rows int) {
 	return cols, rows
 }
 
-// maximizeConsoleWindow agrandit la fenêtre de la console au maximum
-// (façon jeu en plein écran) si le jeu tourne dans une vraie fenêtre
-// console (conhost, Windows Terminal...). Ne fait rien si le programme
-// tourne dans un terminal sans fenêtre propre (ex: certains terminaux
-// intégrés à un éditeur) : GetConsoleWindow renvoie alors un handle nul.
 func maximizeConsoleWindow() {
 	hwnd, _, _ := procGetConsoleWindow.Call()
 	if hwnd == 0 {

@@ -1,17 +1,3 @@
-// Point d'entrée du jeu.
-//
-// Tout le code vivait auparavant dans ce seul fichier (structures, entrée
-// clavier, rendu de combat, boucle de jeu...). Il est maintenant réparti en
-// plusieurs packages :
-//
-//	character/  -> le personnage (joueur ET boss) : stats, PV, inventaire
-//	ascii/      -> chargement + redimensionnement des artworks ASCII des boss
-//	boss/       -> les boss (artwork + pattern de combat, à personnaliser)
-//	world/      -> la carte (3 zones de boss + 1 zone boutique + un boss bonus)
-//	combat/     -> l'interface de combat façon Undertale (boîte, menu, boucle)
-//	utilitaire/ -> forgeron (craft), marchand, effets d'objets (potions...)
-//
-// main.go ne fait plus que les assembler.
 package main
 
 import (
@@ -23,10 +9,6 @@ import (
 )
 
 func main() {
-	// Agrandit la fenêtre de la console au maximum au démarrage, façon jeu
-	// en plein écran (Undertale) : sans effet si le terminal n'a pas de
-	// fenêtre propre (terminal intégré à un éditeur, par exemple), voir
-	// combat/termsize_windows.go.
 	combat.MaximizeConsoleWindow()
 
 	player := character.New("Personnage 1", 1, 8, 3, 50)
@@ -34,8 +16,6 @@ func main() {
 	player.AddItem("Potion de vie")
 
 	w := world.New()
-	// Le nom de la zone est affiché au-dessus de la boîte de combat (la
-	// zone boutique n'a pas de boss, donc pas de Zone à renseigner).
 	for _, z := range w.Zones {
 		if z.Boss != nil {
 			z.Boss.Zone = z.Name
@@ -45,10 +25,6 @@ func main() {
 
 	fmt.Println("Bienvenue,", player.Name, "!")
 	fmt.Println("Appuie sur Entrée pour ouvrir la carte...")
-	// On passe par combat.WaitEnter() (et pas fmt.Scanln()) : les deux
-	// lisent os.Stdin avec leur propre buffer interne, et le premier à
-	// lire risquerait d'engloutir des entrées destinées au second. Voir
-	// le commentaire sur stdinScanner dans combat/input.go.
 	combat.WaitEnter()
 
 	const fragmentsParBoss = 15

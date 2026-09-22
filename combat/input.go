@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// Key représente une commande "logique" reconnue par le jeu.
 type Key string
 
 const (
@@ -20,73 +19,65 @@ const (
 	KeyOther Key = "OTHER"
 )
 
-// stdinScanner est UNIQUE et partagé par tous les écrans du jeu (carte,
-// combats successifs) pendant toute la durée du programme.
-//
-// Piège évité ici : bufio.Scanner lit par blocs (pas ligne par ligne au
-// niveau système). Si chaque écran créait son propre bufio.Scanner(os.Stdin)
-// (comme c'était le cas dans une version précédente de ce fichier), une
-// entrée tapée un peu à l'avance - ou fournie d'un coup, par exemple via un
-// script/pipe de test - pouvait être engloutie dans le buffer interne d'un
-// scanner puis carrément perdue dès qu'un nouveau scanner était créé pour
-// l'écran suivant (le combat suivant recevait alors un EOF immédiat et se
-// fermait tout seul). Un unique scanner, créé une fois, élimine le problème.
 var stdinScanner = bufio.NewScanner(os.Stdin)
 
-// terminalSession représente une session de lecture clavier pour un écran
-// donné (carte ou combat). Elle ne possède plus son propre scanner : elle
-// s'appuie sur stdinScanner, partagé.
-//
-// raw garde la dernière ligne lue (en minuscules, sans espaces) même
-// quand elle ne correspond à aucune Key connue (KeyOther) : ça sert aux
-// raccourcis directs des menus de combat (taper "2" ou "a" puis Entrée
-// pour choisir ET valider une option en une seule saisie, plutôt que de
-// naviguer option par option avant de valider - voir combat/submenu.go et
-// RunBattle dans battle.go).
 type terminalSession struct {
 	raw string
 }
 
 func newTerminalSession() *terminalSession {
+	enterRawMode()
 	return &terminalSession{}
 }
 
-// restore réaffiche le curseur (rien d'autre à restaurer : on n'a jamais
-// mis le terminal dans un mode spécial).
 func (ts *terminalSession) restore() {
+	exitRawMode()
 	fmt.Print("\033[?25h")
 }
 
-// WaitEnter attend une simple pression sur Entrée (utilisé par exemple pour
-// l'écran de bienvenue). Passe par le même stdinScanner partagé que
-// readKey, pour la même raison : ne jamais lire os.Stdin via deux buffers
-// différents.
-func WaitEnter() {
-	stdinScanner.Scan()
+func keyForRune(r rune) (Key, bool) {
+	switch r {
+	case 'z', 'Z', 'w', 'W':
+		return KeyUp, true
+	case 's', 'S':
+		return KeyDown, true
+	case 'q', 'Q':
+		return KeyLeft, true
+	case 'd', 'D':
+		return KeyRight, true
+	case 'x', 'X':
+		return KeyQuit, true
+	case '\r', '\n':
+		return KeyEnter, true
+	}
+	return KeyOther, false
 }
 
-// readKey lit une ligne au clavier et la traduit en commande logique.
-// Contrôles : Z/W ou "up" (haut), S ou "down" (bas), Q/A ou "left" (gauche),
-// D ou "right" (droite), Entrée seule pour valider, X/"quit" pour quitter.
-func (ts *terminalSession) readKey() Key {
+func (ts *terminalSession) readLineKey() Key {
 	if !stdinScanner.Scan() {
 		return KeyQuit
 	}
 	line := strings.ToLower(strings.TrimSpace(stdinScanner.Text()))
 	ts.raw = line
-	switch line {
-	case "":
+	if line == "" {
 		return KeyEnter
-	case "z", "w", "up", "haut":
+	}
+	switch line {
+	case "up", "haut":
 		return KeyUp
-	case "s", "down", "bas":
+	case "down", "bas":
 		return KeyDown
-	case "q", "a", "left", "gauche":
+	case "left", "gauche":
 		return KeyLeft
-	case "d", "right", "droite":
+	case "right", "droite":
 		return KeyRight
-	case "x", "quit", "exit", "quitter":
+	case "quit", "exit", "quitter":
 		return KeyQuit
+	}
+	if r := []rune(line); len(r) == 1 {
+		if k, ok := keyForRune(r[0]); ok {
+			return k
+		}
 	}
 	return KeyOther
 }

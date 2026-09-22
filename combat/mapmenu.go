@@ -6,8 +6,6 @@ import (
 	"ProjetRED/world"
 )
 
-// SelectZone affiche la carte (3 zones) et laisse le joueur en choisir une
-// au clavier. Renvoie nil si le joueur quitte (commande X).
 func SelectZone(w *world.World) *world.Zone {
 	ts := newTerminalSession()
 	defer ts.restore()
@@ -44,7 +42,7 @@ func SelectZone(w *world.World) *world.Zone {
 			fmt.Println(colWhite + "* " + note + colReset)
 			fmt.Println()
 		}
-		fmt.Println(colWhite + "(Z/S pour choisir, Entrée seule pour valider, X pour quitter)" + colReset)
+		fmt.Println(colWhite + "(↑ ↓ pour choisir, Entrée pour valider, X pour quitter)" + colReset)
 
 		key := ts.readKey()
 		last := len(w.Zones) - 1
@@ -76,8 +74,6 @@ func SelectZone(w *world.World) *world.Zone {
 	}
 }
 
-// ConfirmBonusBoss affiche un écran simple demandant au joueur s'il veut
-// affronter le boss bonus (débloqué une fois les 3 zones terminées).
 func ConfirmBonusBoss(bossName string) bool {
 	ts := newTerminalSession()
 	defer ts.restore()
@@ -88,7 +84,7 @@ func ConfirmBonusBoss(bossName string) bool {
 		fmt.Println()
 		fmt.Println(colYellow + "Les trois zones sont terminées." + colReset)
 		fmt.Printf("Un dernier adversaire t'attend : %s%s%s\n\n", colRed, bossName, colReset)
-		fmt.Println(colWhite + "L'affronter ? (Entrée seule = oui, X = non)" + colReset)
+		fmt.Println(colWhite + "L'affronter ? (Entrée = oui, X = non)" + colReset)
 
 		key := ts.readKey()
 		switch key {
