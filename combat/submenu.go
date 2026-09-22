@@ -1,6 +1,3 @@
-// Fichier submenu.go : sous-menu générique utilisé par FIGHT et ACT pour
-// proposer plusieurs options (coup de poing / attaque de Stand en FIGHT,
-// parler / observer / chanter... en ACT - voir boss.ActOption).
 package combat
 
 import (

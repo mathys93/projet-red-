@@ -1,21 +1,3 @@
-// Fichier input.go : lecture des commandes clavier du package combat.
-//
-// Avant cette réorganisation, main.go activait le mode "une touche = une
-// action" en appelant la commande système "stty" via exec.Command. Cette
-// commande n'existe pas sous Windows (cmd.exe / PowerShell) : sttyRun()
-// échouait silencieusement (l'erreur était ignorée), le terminal restait
-// en mode ligne classique, et readKey() lisait des séquences d'échappement
-// qui n'arrivent jamais dans ce mode. Le combat ne fonctionnait donc pas du
-// tout pour un joueur Windows (le cas ici) sans WSL ni Git Bash.
-//
-// Plutôt que de dépendre d'un paquet externe (golang.org/x/term) ou de
-// coder à la main les appels système Windows/Linux/macOS (beaucoup de code
-// spécifique à chaque OS pour un résultat fragile), le jeu utilise ici un
-// mode de saisie "une touche + Entrée", identique sur toutes les
-// plateformes avec seulement la bibliothèque standard de Go (bufio). C'est
-// un compromis assumé : on perd le côté "flèche pressée = action
-// immédiate", mais le jeu tourne de façon identique et fiable sous
-// Windows, macOS et Linux.
 package combat
 
 import (

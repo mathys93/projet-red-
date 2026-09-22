@@ -1,6 +1,3 @@
-// Package combat contient toute l'interface de combat façon Undertale :
-// la boîte de combat avec l'artwork ASCII du boss, la barre de vie, le menu
-// FIGHT / ACT / ITEM / MERCY navigable au clavier, et la boucle de combat.
 package combat
 
 import (

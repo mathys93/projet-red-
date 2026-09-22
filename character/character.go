@@ -1,13 +1,3 @@
-// Package character regroupe tout ce qui concerne le personnage joueur
-// (et sert aussi de base aux boss, voir le package boss) : statistiques,
-// points de vie, inventaire, fragments (monnaie du forgeron).
-//
-// Avant cette réorganisation, la struct Character était redéfinie
-// plusieurs fois (main.go, utilitaire/disque_de_pucci.go, utilitaire/poison POT)
-// avec des champs différents et incompatibles (LP/MaxLP vs HpCurrent/HpMax...),
-// ce qui provoquait des conflits de compilation ("Character redeclared")
-// dès que ces fichiers se retrouvaient dans le même package. Il n'existe
-// maintenant plus qu'UNE seule définition, utilisée partout.
 package character
 
 import "fmt"

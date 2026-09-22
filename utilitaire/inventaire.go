@@ -1,13 +1,3 @@
-// Package utilitaire regroupe les systèmes annexes au combat : forgeron
-// (craft), marchand, effets des objets (potions...), gestion de
-// l'inventaire hors combat.
-//
-// Avant cette réorganisation, ce dossier contenait TROIS définitions
-// différentes de "Character" (dans disque_de_pucci.go, et dans le fichier
-// mal nommé "poison POT" qui, sans extension .go, n'était de toute façon
-// jamais compilé), et forgeron.go référençait un champ c.Fragment qui
-// n'existait sur aucune d'elles : le paquet ne compilait pas. Tout utilise
-// maintenant le seul et même character.Character (voir package character).
 package utilitaire
 
 import (
