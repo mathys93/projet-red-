@@ -67,37 +67,185 @@ func printPadding(contentHeight int) {
 	}
 }
 
-// DrawBox dessine la boîte de combat (largeur/hauteur fixes) avec l'artwork
-// ASCII centré dedans, teinté avec artColor (colWhite si vide).
-func DrawBox(width, height int, art string, artColor string) {
+// visibleWidth renvoie la largeur "à l'écran" d'une chaîne pouvant contenir
+// des codes couleur ANSI (\033[...m), en ignorant ces codes pour le calcul.
+// Sans ça, tout padding calculé sur une chaîne déjà colorée serait faussé
+// par les octets de couleur (invisibles mais comptés par len/[]rune).
+func visibleWidth(s string) int {
+	n := 0
+	inEsc := false
+	for _, r := range s {
+		switch {
+		case inEsc:
+			if r == 'm' {
+				inEsc = false
+			}
+		case r == '\033':
+			inEsc = true
+		default:
+			n++
+		}
+	}
+	return n
+}
+
+// drawFrameTop/drawFrameLine/drawFrameBottom dessinent le cadre de combat,
+// brique par brique : un cadre vide (voir DrawEmptyBox) ou rempli d'une
+// grille d'options (voir DrawOptionGrid) sont tous les deux construits à
+// partir de ces trois fonctions.
+func drawFrameTop(width int) {
+	fmt.Println(colWhite + "┌" + strings.Repeat("─", width-2) + "┐" + colReset)
+}
+
+func drawFrameBottom(width int) {
+	fmt.Println(colWhite + "└" + strings.Repeat("─", width-2) + "┘" + colReset)
+}
+
+// drawFrameLine imprime une ligne de contenu (déjà colorée) à l'intérieur
+// du cadre, complétée par des espaces jusqu'à occuper toute la largeur.
+func drawFrameLine(width int, content string) {
+	pad := width - 2 - visibleWidth(content)
+	if pad < 0 {
+		pad = 0
+	}
+	fmt.Println(colWhite + "│" + colReset + content + strings.Repeat(" ", pad) + colWhite + "│" + colReset)
+}
+
+// DrawArt affiche l'artwork du boss centré, SEUL, au-dessus du cadre de
+// combat (voir DrawEmptyBox/DrawOptionGrid pour le cadre lui-même). Avant,
+// l'artwork était dessiné à l'intérieur du cadre, qui restait donc
+// inutilisable pour autre chose : il est maintenant sorti au-dessus, et le
+// cadre sert de zone d'affichage pour les sous-menus FIGHT/ACT/ITEM.
+func DrawArt(width int, art string, artColor string) {
 	if artColor == "" {
 		artColor = colWhite
 	}
-	fmt.Println(colWhite + "┌" + strings.Repeat("─", width-2) + "┐" + colReset)
-
-	lines := strings.Split(art, "\n")
-	for len(lines) < height-2 {
-		lines = append(lines, "")
-	}
-	if len(lines) > height-2 {
-		lines = lines[:height-2]
-	}
-
-	for _, line := range lines {
-		pad := (width - 2 - len([]rune(line))) / 2
+	for _, line := range strings.Split(art, "\n") {
+		pad := (width - len([]rune(line))) / 2
 		if pad < 0 {
 			pad = 0
 		}
-		right := width - 2 - pad - len([]rune(line))
-		if right < 0 {
-			right = 0
-		}
-		fmt.Println(colWhite + "│" + colReset +
-			strings.Repeat(" ", pad) + artColor + line + colReset + strings.Repeat(" ", right) +
-			colWhite + "│" + colReset)
+		fmt.Println(strings.Repeat(" ", pad) + artColor + line + colReset)
+	}
+}
+
+// DrawEmptyBox dessine un cadre vide de la taille donnée : c'est ce que
+// devient la boîte de combat en dehors des sous-menus (voir DrawArt pour
+// où est passé l'artwork).
+func DrawEmptyBox(width, height int) {
+	drawFrameTop(width)
+	for i := 0; i < height-2; i++ {
+		drawFrameLine(width, "")
+	}
+	drawFrameBottom(width)
+}
+
+// DrawOptionGrid dessine les entrées d'un sous-menu (coups de FIGHT,
+// options ACT, objets d'ITEM...) en grille à deux colonnes À L'INTÉRIEUR
+// du cadre de combat, façon inventaire Undertale (ex : Potion de vie en
+// haut à droite, Disque de Pucci en haut à gauche...), plutôt qu'une
+// simple liste verticale. La description de l'entrée sélectionnée est
+// affichée par l'appelant, sous le cadre (voir combat/submenu.go).
+func DrawOptionGrid(width, height int, items []menuItem, selected int) {
+	drawFrameTop(width)
+
+	const cols = 2
+	colWidth := (width - 2 - (cols + 1)) / cols
+	rows := (len(items) + cols - 1) / cols
+
+	interior := height - 2
+	top := (interior - rows) / 2
+	if top < 0 {
+		top = 0
 	}
 
-	fmt.Println(colWhite + "└" + strings.Repeat("─", width-2) + "┘" + colReset)
+	for i := 0; i < top; i++ {
+		drawFrameLine(width, "")
+	}
+	for r := 0; r < rows; r++ {
+		line := " "
+		for c := 0; c < cols; c++ {
+			idx := r*cols + c
+			cell := strings.Repeat(" ", colWidth)
+			if idx < len(items) {
+				marker := "  "
+				col := colYellow
+				if idx == selected {
+					marker = colRed + "❤ " + colReset
+					col = colRed
+				}
+				text := marker + col + items[idx].Label + colReset
+				pad := colWidth - visibleWidth(text)
+				if pad < 0 {
+					pad = 0
+				}
+				cell = text + strings.Repeat(" ", pad)
+			}
+			line += cell + " "
+		}
+		drawFrameLine(width, line)
+	}
+	for i := 0; i < interior-top-rows; i++ {
+		drawFrameLine(width, "")
+	}
+
+	drawFrameBottom(width)
+}
+
+// DrawActionButtons affiche FIGHT / ACT / ITEM / MERCY sous forme de gros
+// boutons encadrés, répartis sur toute la largeur du cadre (façon boutons
+// d'action d'Undertale), plutôt qu'une simple ligne de texte compacte.
+// Le bouton sélectionné est mis en évidence en rouge avec un cœur.
+func DrawActionButtons(width int, selected int) {
+	options := []string{"FIGHT", "ACT", "ITEM", "MERCY"}
+	hotkeys := []string{"1/F", "2/A", "3/I", "4/M"}
+
+	labels := make([]string, len(options))
+	inner := 0
+	for i, opt := range options {
+		labels[i] = fmt.Sprintf("%s (%s)", opt, hotkeys[i])
+		if n := len([]rune(labels[i])); n > inner {
+			inner = n
+		}
+	}
+	inner += 4 // marge intérieure du bouton (cœur/marqueur + espacement)
+
+	btnOuter := inner + 2 // + les deux bordures verticales du bouton
+	gap := (width - len(options)*btnOuter) / (len(options) + 1)
+	if gap < 2 {
+		gap = 2
+	}
+	margin := strings.Repeat(" ", gap)
+
+	var top, mid, bot strings.Builder
+	for i, label := range labels {
+		col := colWhite
+		heart := "  "
+		if i == selected {
+			col = colRed
+			heart = colRed + "❤ " + colReset
+		}
+		pad := inner - 2 - len([]rune(label))
+		if pad < 0 {
+			pad = 0
+		}
+		left := pad / 2
+		right := pad - left
+
+		top.WriteString(margin + col + "┌" + strings.Repeat("─", inner) + "┐" + colReset)
+		mid.WriteString(margin + col + "│" + colReset + heart +
+			strings.Repeat(" ", left) + col + label + colReset + strings.Repeat(" ", right) +
+			col + "│" + colReset)
+		bot.WriteString(margin + col + "└" + strings.Repeat("─", inner) + "┘" + colReset)
+	}
+	top.WriteString(margin)
+	mid.WriteString(margin)
+	bot.WriteString(margin)
+
+	fmt.Println()
+	fmt.Println(top.String())
+	fmt.Println(mid.String())
+	fmt.Println(bot.String())
 }
 
 // DrawStatBar affiche "Nom  LV x  HP [■■■□□] cur/max  MP cur/max" façon
@@ -137,67 +285,52 @@ func DrawEnemyBar(b *boss.Boss) {
 	fmt.Printf(" %-14s LV %-3d HP %s %d/%d\n", b.Name, b.Level, bar, b.LP, b.MaxLP)
 }
 
-// DrawMenu affiche FIGHT / ACT / ITEM / MERCY avec le cœur devant l'option
-// sélectionnée. Chaque option se déplace avec Q/D (ou Z/S), se valide avec
-// Entrée, OU se choisit directement avec son raccourci (1/F, 2/A, 3/I,
-// 4/M) en une seule saisie.
-func DrawMenu(selected int) {
-	options := []string{"FIGHT", "ACT", "ITEM", "MERCY"}
-	hotkeys := []string{"1/F", "2/A", "3/I", "4/M"}
-	fmt.Println()
-	line := ""
-	for i, opt := range options {
-		if i == selected {
-			line += colRed + "❤ " + colYellow + opt + colReset
-		} else {
-			line += "  " + colWhite + opt + colReset
-		}
-		line += colWhite + "(" + hotkeys[i] + ")   " + colReset
-	}
-	fmt.Println(line)
-}
-
-// RenderBattleScreen redessine l'écran complet (boîte + menu d'actions) à
-// chaque frame où c'est au joueur de choisir son action.
+// RenderBattleScreen redessine l'écran complet (artwork + cadre vide +
+// gros boutons d'action) à chaque frame où c'est au joueur de choisir son
+// action.
 func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int, message string) {
 	clearScreen()
 	bw := boxWidth(boss.ArtWidth + 4)
 	bh := boss.ArtHeight + 2
-	contentHeight := bh + 9
+	artHeight := len(strings.Split(b.Art, "\n"))
+	contentHeight := artHeight + bh + 11
 	if message != "" {
 		contentHeight++
 	}
 	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(bw, bh, b.Art, b.Color)
+	DrawArt(bw, b.Art, b.Color)
+	DrawEmptyBox(bw, bh)
 	fmt.Println()
 	DrawEnemyBar(b)
 	if message != "" {
 		fmt.Println(colWhite + "* " + message + colReset)
 	}
 	DrawStatBar(player)
-	DrawMenu(selected)
+	DrawActionButtons(bw, selected)
 	fmt.Println(colWhite + "\n(Q/D ou raccourci direct pour choisir, Entrée pour valider, X pour quitter)" + colReset)
 }
 
-// RenderTurnMessage affiche la boîte de combat et un message SANS le menu
-// d'actions : utilisé pour bien séparer visuellement le tour du joueur et
-// celui du boss (façon Undertale, où le menu disparaît pendant les
-// attaques), plutôt que de résoudre les deux tours d'un coup dans le même
-// message comme avant.
+// RenderTurnMessage affiche l'artwork, le cadre vide et un message SANS le
+// menu d'actions : utilisé pour bien séparer visuellement le tour du
+// joueur et celui du boss (façon Undertale, où le menu disparaît pendant
+// les attaques), plutôt que de résoudre les deux tours d'un coup dans le
+// même message comme avant.
 func RenderTurnMessage(b *boss.Boss, player *character.Character, message string) {
 	clearScreen()
 	bw := boxWidth(boss.ArtWidth + 4)
 	bh := boss.ArtHeight + 2
-	contentHeight := bh + 7
+	artHeight := len(strings.Split(b.Art, "\n"))
+	contentHeight := artHeight + bh + 7
 	if message != "" {
 		contentHeight++
 	}
 	printPadding(contentHeight)
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(bw, bh, b.Art, b.Color)
+	DrawArt(bw, b.Art, b.Color)
+	DrawEmptyBox(bw, bh)
 	fmt.Println()
 	DrawEnemyBar(b)
 	if message != "" {
@@ -312,7 +445,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 		acted := true
 		switch chosen {
 		case 0: // FIGHT : choix de l'attaque (coup de poing, Stand...).
-			idx, ok := chooseOption(ts, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
 			if !ok {
 				acted = false
 				break
@@ -329,7 +462,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 			animateHPChange(b, player, false, before, b.LP, message)
 		case 1: // ACT : choix de l'action "lore" (parler, observer...).
 			options := b.ActOptions(player)
-			idx, ok := chooseOption(ts, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
 			if !ok {
 				acted = false
 				break
@@ -342,7 +475,7 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 				break
 			}
 			items, names := itemMenuItems(player)
-			idx, ok := chooseOption(ts, fmt.Sprintf("%s - choisis un objet", player.Name), items)
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis un objet", player.Name), items)
 			if !ok {
 				acted = false
 				break

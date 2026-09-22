@@ -3,66 +3,67 @@ package combat
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"ProjetRED/boss"
 	"ProjetRED/character"
 )
 
 // menuItem est une entrée affichable dans un sous-menu : un libellé court
-// et une description affichée en dessous.
+// et une description affichée en dessous du cadre quand elle est survolée.
 type menuItem struct {
 	Label       string
 	Description string
 }
 
-// chooseOption affiche `title` suivi de la liste `items` et laisse le
-// joueur en choisir un.
+// chooseOption affiche l'artwork du boss au-dessus du cadre de combat, la
+// liste `items` en grille à deux colonnes DANS le cadre (voir
+// combat.DrawOptionGrid), et laisse le joueur en choisir un. La
+// description de l'entrée survolée s'affiche sous le cadre.
 //
-// Navigation : Z/S (haut/bas) puis Entrée pour valider, OU directement le
-// numéro de l'option (1..9) pour la choisir ET la valider en une seule
-// saisie - c'est ce raccourci qui règle le principal problème de
-// maniabilité du menu de combat (avant, il fallait naviguer option par
-// option avant de pouvoir valider). X annule et revient au menu FIGHT/ACT/
-// ITEM/MERCY sans consommer le tour.
-func chooseOption(ts *terminalSession, title string, items []menuItem) (idx int, ok bool) {
+// Navigation : Z/S/Q/D (haut/bas/gauche/droite) dans la grille puis Entrée
+// pour valider, OU directement le numéro de l'option (1..9) pour la
+// choisir ET la valider en une seule saisie - c'est ce raccourci qui règle
+// le principal problème de maniabilité du menu de combat (avant, il
+// fallait naviguer option par option avant de pouvoir valider). X annule
+// et revient au menu FIGHT/ACT/ITEM/MERCY sans consommer le tour.
+func chooseOption(ts *terminalSession, b *boss.Boss, title string, items []menuItem) (idx int, ok bool) {
 	selected := 0
 	for {
 		clearScreen()
-		contentHeight := 5
-		for _, it := range items {
-			contentHeight++
-			if it.Description != "" {
-				contentHeight++
-			}
-		}
-		printPadding(contentHeight)
+		bw := boxWidth(boss.ArtWidth + 4)
+		bh := boss.ArtHeight + 2
+		artHeight := len(strings.Split(b.Art, "\n"))
+		printPadding(artHeight + bh + 6)
 		fmt.Println()
 		fmt.Println(colYellow + "  " + title + colReset)
-		fmt.Println()
-		for i, it := range items {
-			marker := "   "
-			if i == selected {
-				marker = colRed + "❤ " + colReset
-			}
-			fmt.Printf("%s%s%d) %s%s\n", marker, colYellow, i+1, it.Label, colReset)
-			if it.Description != "" {
-				fmt.Printf("      %s%s%s\n", colWhite, it.Description, colReset)
-			}
+		DrawArt(bw, b.Art, b.Color)
+		DrawOptionGrid(bw, bh, items, selected)
+		desc := ""
+		if selected < len(items) {
+			desc = items[selected].Description
 		}
+		fmt.Println(colWhite + "* " + desc + colReset)
 		fmt.Println()
-		fmt.Println(colWhite + "(Z/S pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour annuler)" + colReset)
+		fmt.Println(colWhite + "(Z/S/Q/D pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour annuler)" + colReset)
 
 		key := ts.readKey()
 		switch key {
-		case KeyUp, KeyLeft:
-			selected--
-			if selected < 0 {
-				selected = len(items) - 1
+		case KeyUp:
+			if selected-2 >= 0 {
+				selected -= 2
 			}
-		case KeyDown, KeyRight:
-			selected++
-			if selected >= len(items) {
-				selected = 0
+		case KeyDown:
+			if selected+2 < len(items) {
+				selected += 2
+			}
+		case KeyLeft:
+			if selected%2 == 1 {
+				selected--
+			}
+		case KeyRight:
+			if selected%2 == 0 && selected+1 < len(items) {
+				selected++
 			}
 		case KeyQuit:
 			return 0, false

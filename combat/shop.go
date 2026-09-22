@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"ProjetRED/ascii"
 	"ProjetRED/boss"
@@ -91,51 +92,47 @@ func runForgeron(ts *terminalSession, player *character.Character, art string) {
 	}
 }
 
-// shopChoose affiche l'artwork de la boutique (teinté en jaune) suivi d'une
-// liste d'options navigable, sur le même modèle que chooseOption (voir
-// combat/submenu.go) mais avec la boîte ASCII en plus.
+// shopChoose affiche l'artwork de la boutique (teinté en jaune) au-dessus
+// du cadre, la liste `items` en grille à deux colonnes DANS le cadre (voir
+// combat.DrawOptionGrid), sur le même modèle que chooseOption (voir
+// combat/submenu.go).
 func shopChoose(ts *terminalSession, art, title string, items []menuItem) (idx int, ok bool) {
 	selected := 0
 	for {
 		clearScreen()
 		bw := boxWidth(boss.ArtWidth + 4)
 		bh := boss.ArtHeight + 2
-		contentHeight := bh + 6
-		for _, it := range items {
-			contentHeight++
-			if it.Description != "" {
-				contentHeight++
-			}
-		}
-		printPadding(contentHeight)
+		artHeight := len(strings.Split(art, "\n"))
+		printPadding(artHeight + bh + 6)
 		fmt.Println()
 		fmt.Println(colYellow + "  " + title + colReset)
-		DrawBox(bw, bh, art, colYellow)
-		fmt.Println()
-		for i, it := range items {
-			marker := "   "
-			if i == selected {
-				marker = colRed + "❤ " + colReset
-			}
-			fmt.Printf("%s%s%d) %s%s\n", marker, colYellow, i+1, it.Label, colReset)
-			if it.Description != "" {
-				fmt.Printf("      %s%s%s\n", colWhite, it.Description, colReset)
-			}
+		DrawArt(bw, art, colYellow)
+		DrawOptionGrid(bw, bh, items, selected)
+		desc := ""
+		if selected < len(items) {
+			desc = items[selected].Description
 		}
+		fmt.Println(colWhite + "* " + desc + colReset)
 		fmt.Println()
-		fmt.Println(colWhite + "(Z/S pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour quitter)" + colReset)
+		fmt.Println(colWhite + "(Z/S/Q/D pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour quitter)" + colReset)
 
 		key := ts.readKey()
 		switch key {
-		case KeyUp, KeyLeft:
-			selected--
-			if selected < 0 {
-				selected = len(items) - 1
+		case KeyUp:
+			if selected-2 >= 0 {
+				selected -= 2
 			}
-		case KeyDown, KeyRight:
-			selected++
-			if selected >= len(items) {
-				selected = 0
+		case KeyDown:
+			if selected+2 < len(items) {
+				selected += 2
+			}
+		case KeyLeft:
+			if selected%2 == 1 {
+				selected--
+			}
+		case KeyRight:
+			if selected%2 == 0 && selected+1 < len(items) {
+				selected++
 			}
 		case KeyQuit:
 			return 0, false
