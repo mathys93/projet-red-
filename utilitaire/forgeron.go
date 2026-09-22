@@ -50,9 +50,9 @@ func PeutFabriquer(c *character.Character, item string) bool {
 		return false
 	}
 
-	if c.Fragment < prix {
+	if c.Fragments < prix {
 		fmt.Printf("Tu n'as pas assez de Fragments pour fabriquer %s.\n", item)
-		fmt.Printf("Il faut %d Fragments, tu n'en as que %d.\n", prix, c.Fragment)
+		fmt.Printf("Il faut %d Fragments, tu n'en as que %d.\n", prix, c.Fragments)
 		return false
 	}
 
@@ -85,6 +85,6 @@ func Fabriquer(c *character.Character, item string) {
 	c.Fragment -= forgeronObjets[item]
 	c.AddItem(item)
 	fmt.Printf("Tu as fabriqué %s !\n", item)
-	fmt.Printf("Fragments restants : %d\n", c.Fragment)
+	fmt.Printf("Fragments restants : %d\n", c.Fragments)
 	fmt.Printf("Inventaire du joueur : %v\n", c.Inventory)
 }

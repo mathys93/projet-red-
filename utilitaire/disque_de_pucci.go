@@ -3,6 +3,8 @@ package utilitaire
 import "fmt"
 
 type Character struct {
+	string
+	joestar   string
 	Name      string
 	Joestar   string
 	Level     int
@@ -43,6 +45,16 @@ func takePot(c *Character) {
 	// 4. on affiche PV actuels / PV max
 	fmt.Printf("Vous utilisez Potion de vie. PV : %d / %d\n", c.CurrentHP, c.MaxHP)
 }
+
+func displayInventory(c *Character) {
+	for i, item := range c.Inventory {
+		fmt.Printf("%d. %s\n", i+1, item)
+	}
+	fmt.Println("Tapez le nom de l'item à utiliser (ou 0 pour retour) :")
+	// lis l'entrée avec bufio.Scanner ou fmt.Scanln, puis :
+	// switch choix { case "Potion de vie": takePot(c) ... }
+}
+
 func accessInventory(c *Character) {
 	for i, item := range c.Inventory {
 		fmt.Printf("%d. %s\n", i+1, item)
