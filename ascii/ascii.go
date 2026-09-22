@@ -21,13 +21,18 @@ var kiraArt string
 //go:embed disque_de_pucci.txt
 var pucciArt string
 
+//go:embed shop.txt
+var shopArt string
+
 // registry associe une clé simple à chaque artwork, pour que le package
-// boss puisse aller chercher l'art d'un boss par son nom.
+// boss puisse aller chercher l'art d'un boss par son nom (le combat package
+// fait de même pour l'écran de boutique, via la clé "shop").
 var registry = map[string]string{
 	"dio":     dioArt,
 	"diavolo": diavoloArt,
 	"kira":    kiraArt,
 	"pucci":   pucciArt,
+	"shop":    shopArt,
 }
 
 // Get renvoie l'artwork associé à une clé ("dio", "diavolo", "kira", "pucci").

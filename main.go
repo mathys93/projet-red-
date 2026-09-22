@@ -53,6 +53,7 @@ func main() {
 		switch result {
 		case combat.ResultVictory, combat.ResultSpared:
 			zone.Cleared = true
+			combat.OfferShop(player)
 		case combat.ResultDefeat:
 			fmt.Println("\nGame Over.")
 			return

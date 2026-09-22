@@ -6,9 +6,9 @@ import (
 	"ProjetRED/character"
 )
 
-// marchandObjets liste les objets vendus par le marchand et leur coût en
+// MarchandObjets liste les objets vendus par le marchand et leur coût en
 // Fragments.
-var marchandObjets = map[string]int{
+var MarchandObjets = map[string]int{
 	"Disque de Pucci":  3,
 	"Potion de poison": 3,
 	"Arrow":            15,
@@ -17,7 +17,7 @@ var marchandObjets = map[string]int{
 // PeutAcheter vérifie que l'objet existe chez le marchand et que le joueur a
 // assez de Fragments pour l'acheter.
 func PeutAcheter(c *character.Character, item string) bool {
-	prix, existe := marchandObjets[item]
+	prix, existe := MarchandObjets[item]
 	if !existe {
 		fmt.Println("Le marchand ne vend pas cet objet.")
 		return false
@@ -40,7 +40,7 @@ func Acheter(c *character.Character, item string) {
 		return
 	}
 
-	c.Fragment -= marchandObjets[item]
+	c.Fragment -= MarchandObjets[item]
 	c.AddItem(item)
 	fmt.Printf("Tu as acheté %s !\n", item)
 	fmt.Printf("Fragments restants : %d\n", c.Fragment)

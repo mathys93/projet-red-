@@ -18,6 +18,16 @@ const (
 	ArtHeight = 20
 )
 
+// Couleurs ANSI utilisées pour teinter l'artwork de chaque boss à
+// l'affichage (voir combat.DrawBox, qui applique Boss.Color à l'art).
+const (
+	ColorWhite  = "\033[97m"
+	ColorRed    = "\033[91m"
+	ColorYellow = "\033[93m"
+	ColorPurple = "\033[95m"
+	ColorCyan   = "\033[96m"
+)
+
 // Pattern décrit le comportement d'un boss pendant son tour, et ce qui
 // s'affiche quand le joueur choisit ACT. C'est CETTE interface que tu
 // personnalises boss par boss (voir patterns.go) : c'est toi qui t'occupes
@@ -55,11 +65,12 @@ type Boss struct {
 	Art     string
 	Zone    string
 	Pattern Pattern
+	Color   string // teinte ANSI de l'artwork (voir les constantes Color* ci-dessus)
 }
 
 // New construit un boss, charge son artwork depuis le package ascii (par sa
 // clé, ex: "dio") et le redimensionne pour la boîte de combat.
-func New(name string, level, ap, dp, lp int, artKey string, pattern Pattern) *Boss {
+func New(name string, level, ap, dp, lp int, artKey string, pattern Pattern, color string) *Boss {
 	raw, ok := ascii.Get(artKey)
 	if !ok {
 		raw = fmt.Sprintf("(art manquant: %q)", artKey)
@@ -67,10 +78,14 @@ func New(name string, level, ap, dp, lp int, artKey string, pattern Pattern) *Bo
 	if pattern == nil {
 		pattern = DefaultPattern{}
 	}
+	if color == "" {
+		color = ColorWhite
+	}
 	return &Boss{
 		Character: character.New(name, level, ap, dp, lp),
 		Art:       ascii.Fit(raw, ArtWidth, ArtHeight),
 		Pattern:   pattern,
+		Color:     color,
 	}
 }
 
@@ -97,21 +112,21 @@ func (b *Boss) ActOptions(player *character.Character) []ActOption {
 
 // NewDio crée le boss de la Zone 1.
 func NewDio() *Boss {
-	return New("DIO", 5, 6, 2, 40, "dio", DioPattern{})
+	return New("DIO", 5, 6, 2, 40, "dio", DioPattern{}, ColorYellow)
 }
 
 // NewDiavolo crée le boss de la Zone 2.
 func NewDiavolo() *Boss {
-	return New("Diavolo", 6, 7, 3, 50, "diavolo", DiavoloPattern{})
+	return New("Diavolo", 6, 7, 3, 50, "diavolo", DiavoloPattern{}, ColorPurple)
 }
 
 // NewKira crée le boss de la Zone 3.
 func NewKira() *Boss {
-	return New("Yoshikage Kira", 6, 6, 3, 45, "kira", KiraPattern{})
+	return New("Yoshikage Kira", 6, 6, 3, 45, "kira", KiraPattern{}, ColorCyan)
 }
 
 // NewPucci crée le boss bonus (non assigné à une zone par défaut, voir
 // world.go) : Enrico Pucci et son Disque, débloqué après les 3 zones.
 func NewPucci() *Boss {
-	return New("Enrico Pucci", 8, 8, 4, 70, "pucci", PucciPattern{})
+	return New("Enrico Pucci", 8, 8, 4, 70, "pucci", PucciPattern{}, ColorRed)
 }

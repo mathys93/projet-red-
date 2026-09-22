@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"ProjetRED/boss"
 	"ProjetRED/character"
@@ -21,8 +22,11 @@ func clearScreen() {
 }
 
 // DrawBox dessine la boîte de combat (largeur/hauteur fixes) avec l'artwork
-// ASCII du boss centré dedans.
-func DrawBox(width, height int, art string) {
+// ASCII centré dedans, teinté avec artColor (colWhite si vide).
+func DrawBox(width, height int, art string, artColor string) {
+	if artColor == "" {
+		artColor = colWhite
+	}
 	fmt.Println(colWhite + "┌" + strings.Repeat("─", width-2) + "┐" + colReset)
 
 	lines := strings.Split(art, "\n")
@@ -43,7 +47,7 @@ func DrawBox(width, height int, art string) {
 			right = 0
 		}
 		fmt.Println(colWhite + "│" + colReset +
-			strings.Repeat(" ", pad) + line + strings.Repeat(" ", right) +
+			strings.Repeat(" ", pad) + artColor + line + colReset + strings.Repeat(" ", right) +
 			colWhite + "│" + colReset)
 	}
 
@@ -64,6 +68,26 @@ func DrawStatBar(c *character.Character) {
 	bar := colYellow + strings.Repeat("■", filled) + colWhite + strings.Repeat("□", barLen-filled) + colReset
 
 	fmt.Printf(" %-14s LV %-3d HP %s %d/%d   MP %d/%d\n", c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP)
+}
+
+// DrawEnemyBar affiche la barre de PV du boss (façon barre de vie
+// d'adversaire), pour qu'on voie clairement ses PV baisser pendant le
+// combat, comme pour le joueur avec DrawStatBar.
+func DrawEnemyBar(b *boss.Boss) {
+	barLen := 20
+	filled := 0
+	if b.MaxLP > 0 {
+		filled = (b.LP * barLen) / b.MaxLP
+	}
+	if filled > barLen {
+		filled = barLen
+	}
+	if filled < 0 {
+		filled = 0
+	}
+	bar := colRed + strings.Repeat("■", filled) + colWhite + strings.Repeat("□", barLen-filled) + colReset
+
+	fmt.Printf(" %-14s LV %-3d HP %s %d/%d\n", b.Name, b.Level, bar, b.LP, b.MaxLP)
 }
 
 // DrawMenu affiche FIGHT / ACT / ITEM / MERCY avec le cœur devant l'option
@@ -92,8 +116,9 @@ func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int,
 	clearScreen()
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art)
+	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art, b.Color)
 	fmt.Println()
+	DrawEnemyBar(b)
 	if message != "" {
 		fmt.Println(colWhite + "* " + message + colReset)
 	}
@@ -111,13 +136,46 @@ func RenderTurnMessage(b *boss.Boss, player *character.Character, message string
 	clearScreen()
 	fmt.Println()
 	fmt.Println(colYellow + "  " + b.Zone + colReset)
-	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art)
+	DrawBox(boss.ArtWidth+4, boss.ArtHeight+2, b.Art, b.Color)
 	fmt.Println()
+	DrawEnemyBar(b)
 	if message != "" {
 		fmt.Println(colWhite + "* " + message + colReset)
 	}
 	DrawStatBar(player)
 	fmt.Println(colWhite + "\n(Entrée pour continuer, X pour quitter)" + colReset)
+}
+
+// animateHPChange anime la barre de PV du joueur (isPlayer = true) ou du
+// boss entre `before` et `after`, en redessinant l'écran de tour par petits
+// pas espacés d'un court délai, pour qu'on voie vraiment les PV baisser (ou
+// remonter) au lieu de sauter directement à la valeur finale.
+func animateHPChange(b *boss.Boss, player *character.Character, isPlayer bool, before, after int, message string) {
+	if before == after {
+		RenderTurnMessage(b, player, message)
+		return
+	}
+
+	const steps = 8
+	const frameDelay = 60 * time.Millisecond
+
+	for i := 1; i <= steps; i++ {
+		cur := before + (after-before)*i/steps
+		if isPlayer {
+			player.LP = cur
+		} else {
+			b.LP = cur
+		}
+		RenderTurnMessage(b, player, message)
+		time.Sleep(frameDelay)
+	}
+
+	if isPlayer {
+		player.LP = after
+	} else {
+		b.LP = after
+	}
+	RenderTurnMessage(b, player, message)
 }
 
 // waitContinue attend une validation du joueur pour laisser le temps de
@@ -205,7 +263,9 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 				break
 			}
 			player.MP -= move.MPCost
+			before := b.LP
 			message = move.Perform(player, b.Character)
+			animateHPChange(b, player, false, before, b.LP, message)
 		case 1: // ACT : choix de l'action "lore" (parler, observer...).
 			options := b.ActOptions(player)
 			idx, ok := chooseOption(ts, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
@@ -214,16 +274,23 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 				break
 			}
 			message = options[idx].Resolve(b, player)
-		case 2: // ITEM
+		case 2: // ITEM : choix de l'objet à utiliser dans l'inventaire.
 			if len(player.Inventory) == 0 {
 				message = "Ton inventaire est vide !"
 				acted = false
 				break
 			}
-			item := player.Inventory[0]
-			player.RemoveItem(item)
-			player.Heal(10)
-			message = fmt.Sprintf("Tu utilises %s. LP restauré.", item)
+			items, names := itemMenuItems(player)
+			idx, ok := chooseOption(ts, fmt.Sprintf("%s - choisis un objet", player.Name), items)
+			if !ok {
+				acted = false
+				break
+			}
+			used, msg := useItem(b, player, names[idx])
+			message = msg
+			if !used {
+				acted = false
+			}
 		case 3: // MERCY
 			message = fmt.Sprintf("Tu épargnes %s...", b.Name)
 			RenderBattleScreen(b, player, selected, message)
@@ -248,15 +315,24 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 			return ResultVictory
 		}
 
+		if !player.IsAlive() {
+			// Un objet utilisé au tour du joueur (ex: Potion de poison) peut
+			// l'achever avant même le tour du boss.
+			RenderTurnMessage(b, player, "Tu es tombé(e) au combat...")
+			waitContinue(ts)
+			return ResultDefeat
+		}
+
 		// Le tour du boss, affiché à part : c'est là que chaque boss aura
 		// son propre comportement (voir boss/patterns.go).
 		RenderTurnMessage(b, player, fmt.Sprintf("-- Tour de %s --", b.Name))
 		if !waitContinue(ts) {
 			return ResultQuit
 		}
+		beforePlayerLP := player.LP
 		bossMessage := b.Turn(turn, player)
 		turn++
-		RenderTurnMessage(b, player, bossMessage)
+		animateHPChange(b, player, true, beforePlayerLP, player.LP, bossMessage)
 		if !waitContinue(ts) {
 			return ResultQuit
 		}
