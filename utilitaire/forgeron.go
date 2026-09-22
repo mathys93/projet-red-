@@ -1,5 +1,3 @@
-// Fichier forgeron.go : fabrication d'équipement contre des Fragments et
-// des ressources trouvées en jeu.
 package utilitaire
 
 import (
