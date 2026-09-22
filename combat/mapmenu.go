@@ -1,5 +1,3 @@
-// Fichier mapmenu.go : écran de sélection de zone sur la carte (3 zones,
-// chacune gardée par un boss - voir package world).
 package combat
 
 import (

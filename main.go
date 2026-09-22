@@ -7,7 +7,7 @@
 //	character/  -> le personnage (joueur ET boss) : stats, PV, inventaire
 //	ascii/      -> chargement + redimensionnement des artworks ASCII des boss
 //	boss/       -> les boss (artwork + pattern de combat, à personnaliser)
-//	world/      -> la carte (3 zones, un boss par zone + un boss bonus)
+//	world/      -> la carte (3 zones de boss + 1 zone boutique + un boss bonus)
 //	combat/     -> l'interface de combat façon Undertale (boîte, menu, boucle)
 //	utilitaire/ -> forgeron (craft), marchand, effets d'objets (potions...)
 //
@@ -24,13 +24,16 @@ import (
 
 func main() {
 	player := character.New("Personnage 1", 1, 8, 3, 50)
-	player.AddItem("Potion")
-	player.AddItem("Potion")
+	player.AddItem("Potion de vie")
+	player.AddItem("Potion de vie")
 
 	w := world.New()
-	// Le nom de la zone est affiché au-dessus de la boîte de combat.
+	// Le nom de la zone est affiché au-dessus de la boîte de combat (la
+	// zone boutique n'a pas de boss, donc pas de Zone à renseigner).
 	for _, z := range w.Zones {
-		z.Boss.Zone = z.Name
+		if z.Boss != nil {
+			z.Boss.Zone = z.Name
+		}
 	}
 	w.BonusBoss.Zone = "Zone Bonus - Le Disque de Pucci"
 
@@ -42,6 +45,8 @@ func main() {
 	// le commentaire sur stdinScanner dans combat/input.go.
 	combat.WaitEnter()
 
+	const fragmentsParBoss = 15
+
 	for {
 		zone := combat.SelectZone(w)
 		if zone == nil {
@@ -49,10 +54,19 @@ func main() {
 			return
 		}
 
+		if zone.IsShop {
+			combat.RunShop(player)
+			continue
+		}
+
 		result := combat.RunBattle(player, zone.Boss)
 		switch result {
 		case combat.ResultVictory, combat.ResultSpared:
 			zone.Cleared = true
+			player.Fragment += fragmentsParBoss
+			fmt.Printf("\nTu gagnes %d Fragments ! (Total : %d)\n", fragmentsParBoss, player.Fragment)
+			fmt.Println("Appuie sur Entrée pour continuer...")
+			combat.WaitEnter()
 		case combat.ResultDefeat:
 			fmt.Println("\nGame Over.")
 			return

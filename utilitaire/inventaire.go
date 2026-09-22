@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Package utilitaire regroupe les systèmes annexes au combat : forgeron
 // (craft), marchand, effets des objets (potions...), gestion de
 // l'inventaire hors combat.
@@ -9,6 +10,9 @@
 // n'existait sur aucune d'elles : le paquet ne compilait pas. Tout utilise
 // maintenant le seul et même character.Character (voir package character).
 package main
+=======
+package utilitaire
+>>>>>>> b6405f91968060dd6b975508bd490f4401c96579
 
 import (
 	"fmt"

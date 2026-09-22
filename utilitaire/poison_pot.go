@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Fichier poison_pot.go : effet de la Potion de poison + achat chez le
 // marchand.
 //
@@ -10,6 +11,9 @@
 // fois renommé en .go. Tout est maintenant réécrit avec le character.Character
 // partagé, sans func main() (ce n'est pas le rôle d'un paquet utilitaire).
 package main
+=======
+package utilitaire
+>>>>>>> b6405f91968060dd6b975508bd490f4401c96579
 
 import (
 	"fmt"

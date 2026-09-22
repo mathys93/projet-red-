@@ -6,8 +6,8 @@ import (
 	"ProjetRED/character"
 )
 
-// forgeronObjets liste les équipements fabricables et leur coût en Fragments.
-var forgeronObjets = map[string]int{
+// ForgeronObjets liste les équipements fabricables et leur coût en Fragments.
+var ForgeronObjets = map[string]int{
 	"Chapeau de l'aventurier": 5,
 	"Tunique de l'aventurier": 5,
 	"Bottes de l'aventurier":  5,
@@ -44,15 +44,15 @@ func possedeRessources(c *character.Character, item string) bool {
 // PeutFabriquer vérifie que l'objet existe, que le joueur a assez de
 // Fragments, les ressources nécessaires, et de la place dans l'inventaire.
 func PeutFabriquer(c *character.Character, item string) bool {
-	prix, existe := forgeronObjets[item]
+	prix, existe := ForgeronObjets[item]
 	if !existe {
 		fmt.Println("Le forgeron ne fabrique pas cet objet.")
 		return false
 	}
 
-	if c.Fragments < prix {
+	if c.Fragment < prix {
 		fmt.Printf("Tu n'as pas assez de Fragments pour fabriquer %s.\n", item)
-		fmt.Printf("Il faut %d Fragments, tu n'en as que %d.\n", prix, c.Fragments)
+		fmt.Printf("Il faut %d Fragments, tu n'en as que %d.\n", prix, c.Fragment)
 		return false
 	}
 
@@ -82,9 +82,9 @@ func Fabriquer(c *character.Character, item string) {
 		}
 	}
 
-	c.Fragment -= forgeronObjets[item]
+	c.Fragment -= ForgeronObjets[item]
 	c.AddItem(item)
 	fmt.Printf("Tu as fabriqué %s !\n", item)
-	fmt.Printf("Fragments restants : %d\n", c.Fragments)
+	fmt.Printf("Fragments restants : %d\n", c.Fragment)
 	fmt.Printf("Inventaire du joueur : %v\n", c.Inventory)
 }

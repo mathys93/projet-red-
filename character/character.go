@@ -1,13 +1,3 @@
-// Package character regroupe tout ce qui concerne le personnage joueur
-// (et sert aussi de base aux boss, voir le package boss) : statistiques,
-// points de vie, inventaire, fragments (monnaie du forgeron).
-//
-// Avant cette réorganisation, la struct Character était redéfinie
-// plusieurs fois (main.go, utilitaire/disque_de_pucci.go, utilitaire/poison POT)
-// avec des champs différents et incompatibles (LP/MaxLP vs HpCurrent/HpMax...),
-// ce qui provoquait des conflits de compilation ("Character redeclared")
-// dès que ces fichiers se retrouvaient dans le même package. Il n'existe
-// maintenant plus qu'UNE seule définition, utilisée partout.
 package character
 
 import "fmt"
@@ -73,7 +63,9 @@ func DefaultMoves() []Move {
 	}
 }
 
-// New crée un nouveau personnage avec des PV pleins.
+// New crée un nouveau personnage avec des PV pleins. Fragment démarre à 20 :
+// sans ça, un joueur fraîchement créé n'a jamais de quoi acheter quoi que ce
+// soit chez le marchand ou le forgeron.
 func New(name string, level, ap, dp, lp int) *Character {
 	return &Character{
 		Name:      name,
@@ -84,6 +76,7 @@ func New(name string, level, ap, dp, lp int) *Character {
 		MaxLP:     lp,
 		MP:        20,
 		MaxMP:     20,
+		Fragment:  20,
 		Inventory: []string{},
 		Moves:     DefaultMoves(),
 	}

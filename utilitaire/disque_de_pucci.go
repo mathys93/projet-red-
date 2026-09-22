@@ -1,65 +1,24 @@
 package utilitaire
 
-import "fmt"
+import (
+	"fmt"
 
-type Character struct {
-	string
-	joestar   string
-	Name      string
-	Joestar   string
-	Level     int
-	MaxHP     int
-	CurrentHP int
-	Inventory []string // une liste de noms d'items
-}
+	"ProjetRED/character"
+)
 
-func addInventory(c *Character, item string) {
-	c.Inventory = append(c.Inventory, item)
-}
-
-func removeInventory(c *Character, item string) bool {
-	for i, it := range c.Inventory {
-		if it == item {
-			// on recolle le slice sans l'élément à l'index i
-			c.Inventory = append(c.Inventory[:i], c.Inventory[i+1:]...)
-			return true
-		}
-	}
-	return false // l'item n'était pas dans l'inventaire
-}
-func takePot(c *Character) {
-	// 1. on retire la potion (et on vérifie qu'on en avait une)
-	if !removeInventory(c, "Potion de vie") {
-		fmt.Println("Vous n'avez pas de potion de vie !")
+// ApplyDisqueDePucci consomme un "Disque de Pucci" de l'inventaire (si
+// présent) et restaure 50 PV.
+func ApplyDisqueDePucci(c *character.Character) {
+	if !c.RemoveItem("Disque de Pucci") {
+		fmt.Println("Vous n'avez pas de Disque de Pucci !")
 		return
 	}
-
-	// 2. on soigne de 50 PV
-	c.CurrentHP += 50
-
-	// 3. on plafonne aux PV max
-	if c.CurrentHP > c.MaxHP {
-		c.CurrentHP = c.MaxHP
-	}
-
-	// 4. on affiche PV actuels / PV max
-	fmt.Printf("Vous utilisez Potion de vie. PV : %d / %d\n", c.CurrentHP, c.MaxHP)
+	c.Heal(50)
+	fmt.Printf("Vous utilisez Disque de Pucci. PV : %d / %d\n", c.LP, c.MaxLP)
 }
 
-func displayInventory(c *Character) {
-	for i, item := range c.Inventory {
-		fmt.Printf("%d. %s\n", i+1, item)
-	}
-	fmt.Println("Tapez le nom de l'item à utiliser (ou 0 pour retour) :")
-	// lis l'entrée avec bufio.Scanner ou fmt.Scanln, puis :
-	// switch choix { case "Potion de vie": takePot(c) ... }
-}
-
-func accessInventory(c *Character) {
-	for i, item := range c.Inventory {
-		fmt.Printf("%d. %s\n", i+1, item)
-	}
-	fmt.Println("Tapez le nom de l'item à utiliser (ou 0 pour retour) :")
-	// lis l'entrée avec bufio.Scanner ou fmt.Scanln, puis :
-	// switch choix { case "Potion de vie": takePot(c) ... }
+// BuyDisqueDePucci simule l'achat d'un Disque de Pucci chez le marchand.
+func BuyDisqueDePucci(c *character.Character) {
+	c.AddItem("Disque de Pucci")
+	fmt.Println("Vous avez acheté un Disque de Pucci et l'avez ajouté à votre inventaire.")
 }
