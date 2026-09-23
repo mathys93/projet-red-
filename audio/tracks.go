@@ -11,10 +11,10 @@ var BattleTrack = ""
 
 var BossTracks = map[string]string{
 	"DIO":            "musique/KwikFlip.mp3",
-	"Diavolo":        "",
-	"Yoshikage Kira": "",
-	"Enrico Pucci":   "",
-	"Iggy":           "",
+	"Diavolo":        "musique/diavolo.mp3",
+	"Yoshikage Kira": "musique/kira.mp3",
+	"Enrico Pucci":   "musique/pucci.mp3",
+	"Iggy":           "musique/iggy.mp3",
 }
 
 func TrackFor(name string) string {

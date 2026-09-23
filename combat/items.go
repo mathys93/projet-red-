@@ -16,7 +16,7 @@ func itemDescription(item string) string {
 		return "Restaure 15 MP."
 	case "Disque de Pucci":
 		return "Restaure 50 PV."
-	case "Potion de poison":
+	case "Tel Diavolo":
 		return "Inflige des dégâts, ignore la Defense Power."
 	case "Arrow":
 		return "Éveille un Stand permanent : bonus d'attaque et nouvelle action de combat."
@@ -68,7 +68,7 @@ func useItem(b *boss.Boss, player *character.Character, item string) (bool, stri
 		}
 		return true, fmt.Sprintf("Tu utilises %s. +%d MP (%d/%d).", item, player.MP-before, player.MP, player.MaxMP)
 
-	case "Potion de poison":
+	case "Tel Diavolo":
 		player.RemoveItem(item)
 		RenderTurnMessage(b, player, fmt.Sprintf("Tu bois %s... mauvaise idée.", item))
 		time.Sleep(400 * time.Millisecond)

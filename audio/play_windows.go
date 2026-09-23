@@ -51,4 +51,11 @@ func Play(path string) {
 func Stop() {
 	send("stop " + alias)
 	send("close " + alias)
+	// "close all" est un filet de sécurité : si le "close" ci-dessus a
+	// échoué (l'alias restait alors verrouillé sur l'ancien device MCI),
+	// le Play() suivant retombait sur l'ancienne piste toujours en train
+	// de jouer EN PLUS de la nouvelle - d'où les deux musiques superposées
+	// en passant d'un combat à l'autre. "close all" force la fermeture de
+	// tout device MCI encore ouvert, peu importe son alias.
+	send("close all")
 }

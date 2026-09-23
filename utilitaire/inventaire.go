@@ -53,7 +53,7 @@ func UseInventory(c *character.Character) {
 	case "Potion de vie":
 		c.Heal(50)
 		fmt.Printf("Vous utilisez Potion de vie. PV : %d / %d\n", c.LP, c.MaxLP)
-	case "Potion de poison":
+	case "Tel Diavolo":
 		ApplyPoisonPotion(c)
 	default:
 		fmt.Printf("Vous utilisez %s.\n", item)

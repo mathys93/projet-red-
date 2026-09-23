@@ -20,6 +20,6 @@ func ApplyPoisonPotion(c *character.Character) {
 }
 
 func BuyPoisonPotion(c *character.Character) {
-	c.AddItem("Potion de poison")
-	fmt.Println("Vous avez acheté une Potion de poison et l'avez ajoutée à votre inventaire.")
+	c.AddItem("Tel Diavolo")
+	fmt.Println("Vous avez acheté un Tel Diavolo et l'avez ajouté à votre inventaire.")
 }

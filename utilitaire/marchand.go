@@ -7,11 +7,11 @@ import (
 )
 
 var MarchandObjets = map[string]int{
-	"Potion de vie":    4,
-	"Potion de MP":     4,
-	"Disque de Pucci":  6,
-	"Potion de poison": 3,
-	"Arrow":            15,
+	"Potion de vie":   4,
+	"Potion de MP":    4,
+	"Disque de Pucci": 6,
+	"Tel Diavolo":     3,
+	"Arrow":           15,
 }
 
 func PeutAcheter(c *character.Character, item string) bool {
