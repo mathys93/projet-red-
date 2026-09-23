@@ -4,6 +4,7 @@ package audio
 
 import (
 	"fmt"
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -15,13 +16,36 @@ var (
 
 const alias = "projetredbgm"
 
-func send(command string) bool {
+type mciCall struct {
+	command string
+	result  chan bool
+}
+
+var mciQueue = make(chan mciCall)
+
+func init() {
+	go func() {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+		for call := range mciQueue {
+			call.result <- rawSend(call.command)
+		}
+	}()
+}
+
+func rawSend(command string) bool {
 	ptr, err := syscall.UTF16PtrFromString(command)
 	if err != nil {
 		return false
 	}
 	ret, _, _ := procMCISendString.Call(uintptr(unsafe.Pointer(ptr)), 0, 0, 0)
 	return ret == 0
+}
+
+func send(command string) bool {
+	result := make(chan bool, 1)
+	mciQueue <- mciCall{command: command, result: result}
+	return <-result
 }
 
 func Play(path string) {
@@ -51,11 +75,4 @@ func Play(path string) {
 func Stop() {
 	send("stop " + alias)
 	send("close " + alias)
-	// "close all" est un filet de sécurité : si le "close" ci-dessus a
-	// échoué (l'alias restait alors verrouillé sur l'ancien device MCI),
-	// le Play() suivant retombait sur l'ancienne piste toujours en train
-	// de jouer EN PLUS de la nouvelle - d'où les deux musiques superposées
-	// en passant d'un combat à l'autre. "close all" force la fermeture de
-	// tout device MCI encore ouvert, peu importe son alias.
-	send("close all")
 }

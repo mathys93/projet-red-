@@ -391,85 +391,80 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 	message := fmt.Sprintf("%s bloque le passage !", b.Name)
 
 	for player.IsAlive() && b.IsAlive() {
-		if player.StunnedTurns > 0 {
-			player.StunnedTurns--
-			message = "Tu es enraciné(e), impossible d'agir ce tour-ci !"
-		} else {
+		RenderBattleScreen(b, player, selected, message)
+
+		key := ts.readKey()
+		chosen := -1
+		switch key {
+		case KeyLeft, KeyUp:
+			selected = (selected + 3) % 4
+		case KeyRight, KeyDown:
+			selected = (selected + 1) % 4
+		case KeyQuit:
+			return ResultQuit
+		case KeyEnter:
+			chosen = selected
+		case KeyOther:
+			if idx, ok := mainMenuHotkeys[ts.raw]; ok {
+				selected = idx
+				chosen = idx
+			}
+		}
+		if chosen == -1 {
+			continue
+		}
+
+		acted := true
+		switch chosen {
+		case 0:
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
+			if !ok {
+				acted = false
+				break
+			}
+			move := player.Moves[idx]
+			if player.MP < move.MPCost {
+				message = "Pas assez de MP pour cette action !"
+				acted = false
+				break
+			}
+			player.MP -= move.MPCost
+			before := b.LP
+			message = move.Perform(player, b.Character)
+			animateHPChange(b, player, false, before, b.LP, message)
+		case 1:
+			options := b.ActOptions(player)
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
+			if !ok {
+				acted = false
+				break
+			}
+			message = options[idx].Resolve(b, player)
+		case 2:
+			if len(player.Inventory) == 0 {
+				message = "Ton inventaire est vide !"
+				acted = false
+				break
+			}
+			items, names := itemMenuItems(player)
+			idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis un objet", player.Name), items)
+			if !ok {
+				acted = false
+				break
+			}
+			used, msg := useItem(b, player, names[idx])
+			message = msg
+			if !used {
+				acted = false
+			}
+		case 3:
+			message = fmt.Sprintf("Tu épargnes %s...", b.Name)
 			RenderBattleScreen(b, player, selected, message)
+			return ResultSpared
+		}
 
-			key := ts.readKey()
-			chosen := -1
-			switch key {
-			case KeyLeft, KeyUp:
-				selected = (selected + 3) % 4
-			case KeyRight, KeyDown:
-				selected = (selected + 1) % 4
-			case KeyQuit:
-				return ResultQuit
-			case KeyEnter:
-				chosen = selected
-			case KeyOther:
-				if idx, ok := mainMenuHotkeys[ts.raw]; ok {
-					selected = idx
-					chosen = idx
-				}
-			}
-			if chosen == -1 {
-				continue
-			}
-
-			acted := true
-			switch chosen {
-			case 0:
-				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis ton attaque", player.Name), fightMenuItems(player))
-				if !ok {
-					acted = false
-					break
-				}
-				move := player.Moves[idx]
-				if player.MP < move.MPCost {
-					message = "Pas assez de MP pour cette action !"
-					acted = false
-					break
-				}
-				player.MP -= move.MPCost
-				before := b.LP
-				message = move.Perform(player, b.Character)
-				animateHPChange(b, player, false, before, b.LP, message)
-			case 1:
-				options := b.ActOptions(player)
-				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - que fais-tu ?", b.Name), actMenuItems(options))
-				if !ok {
-					acted = false
-					break
-				}
-				message = options[idx].Resolve(b, player)
-			case 2:
-				if len(player.Inventory) == 0 {
-					message = "Ton inventaire est vide !"
-					acted = false
-					break
-				}
-				items, names := itemMenuItems(player)
-				idx, ok := chooseOption(ts, b, fmt.Sprintf("%s - choisis un objet", player.Name), items)
-				if !ok {
-					acted = false
-					break
-				}
-				used, msg := useItem(b, player, names[idx])
-				message = msg
-				if !used {
-					acted = false
-				}
-			case 3:
-				message = fmt.Sprintf("Tu épargnes %s...", b.Name)
-				RenderBattleScreen(b, player, selected, message)
-				return ResultSpared
-			}
-
-			if !acted {
-				continue
-			}
+		if !acted {
+			continue
 		}
 
 		RenderTurnMessage(b, player, message)

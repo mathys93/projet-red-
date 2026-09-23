@@ -6,25 +6,6 @@ import (
 	"ProjetRED/character"
 )
 
-type DefaultPattern struct{}
-
-func (DefaultPattern) Act(turn int, self *Boss, player *character.Character) string {
-	dmg := player.TakeDamage(self.AP)
-	return fmt.Sprintf("%s riposte : %d dégâts.", self.Name, dmg)
-}
-
-func (DefaultPattern) ActOptions(self *Boss, player *character.Character) []ActOption {
-	return []ActOption{
-		{
-			Label:       "Observer",
-			Description: fmt.Sprintf("Regarder %s attentivement.", self.Name),
-			Resolve: func(self *Boss, player *character.Character) string {
-				return fmt.Sprintf("Tu observes %s...", self.Name)
-			},
-		},
-	}
-}
-
 type IggyPattern struct{}
 
 func (p IggyPattern) Act(turn int, self *Boss, player *character.Character) string {

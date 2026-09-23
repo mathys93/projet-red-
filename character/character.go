@@ -3,9 +3,8 @@ package character
 import "fmt"
 
 type Character struct {
-	Name    string
-	Joestar string
-	Level   int
+	Name  string
+	Level int
 
 	AP int
 	DP int
@@ -25,7 +24,6 @@ type Character struct {
 	Stand *Stand
 
 	SkipBossNextTurn  bool
-	StunnedTurns      int
 	HasResurrectCharm bool
 }
 
@@ -135,18 +133,4 @@ func (c *Character) RemoveItem(item string) bool {
 		}
 	}
 	return false
-}
-
-func (c *Character) CountItem(item string) int {
-	count := 0
-	for _, it := range c.Inventory {
-		if it == item {
-			count++
-		}
-	}
-	return count
-}
-
-func (c *Character) String() string {
-	return fmt.Sprintf("%s (LV %d) HP %d/%d AP %d DP %d", c.Name, c.Level, c.LP, c.MaxLP, c.AP, c.DP)
 }

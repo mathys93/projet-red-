@@ -53,9 +53,6 @@ func New(name string, level, ap, dp, lp, xpReward int, artKey string, pattern Pa
 	if !ok {
 		raw = fmt.Sprintf("(art manquant: %q)", artKey)
 	}
-	if pattern == nil {
-		pattern = DefaultPattern{}
-	}
 	if color == "" {
 		color = ColorWhite
 	}
