@@ -19,6 +19,11 @@ const (
 	KeyOther Key = "OTHER"
 )
 
+type keyEvent struct {
+	key  Key
+	down bool
+}
+
 var stdinScanner = bufio.NewScanner(os.Stdin)
 
 type terminalSession struct {

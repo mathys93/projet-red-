@@ -30,6 +30,7 @@ func main() {
 	braille := flag.Bool("braille", true, "rendu en braille Unicode (2x4 points par caractère)")
 	clipPct := flag.Float64("clip", 0.01, "pourcentage de valeurs extrêmes ignorées lors de l'étirement de contraste")
 	contrastBoost := flag.Float64("contrast", 1.0, "renforcement du contraste autour du gris moyen avant tramage, 1 = inchangé")
+	invert := flag.Bool("invert", false, "sujet sombre sur fond clair : inverse les tons pour que l'encre s'allume au lieu du fond")
 	cropFlag := flag.String("crop", "", "recadrage en pixels \"x,y,w,h\" avant conversion")
 	preview := flag.String("preview", "", "écrit une prévisualisation PNG agrandie du rendu")
 	flag.Parse()
@@ -76,7 +77,7 @@ func main() {
 
 	var lines []string
 	if *braille {
-		lines = renderBraille(img, bounds, outCols, outRows, *clipPct, *edgeWeight, *toneWeight, *contrastBoost)
+		lines = renderBraille(img, bounds, outCols, outRows, *clipPct, *edgeWeight, *toneWeight, *contrastBoost, *invert)
 	} else {
 		lum, srcGridW, srcGridH := luminanceGrid(img, bounds)
 		edges := sobelMagnitude(lum, srcGridW, srcGridH)
@@ -86,6 +87,11 @@ func main() {
 
 		toneGrid := sampleGrid(img, bounds, outCols, outRows)
 		percentileStretch(toneGrid, *clipPct)
+		if *invert {
+			for i, v := range toneGrid {
+				toneGrid[i] = 1 - v
+			}
+		}
 
 		grid := make([]float64, outCols*outRows)
 		for i := range grid {
@@ -311,11 +317,16 @@ func percentileStretch(grid []float64, clipPct float64) {
 	}
 }
 
-func renderBraille(img image.Image, bounds image.Rectangle, cols, rows int, clipPct, edgeWeight, toneWeight, contrastBoost float64) []string {
+func renderBraille(img image.Image, bounds image.Rectangle, cols, rows int, clipPct, edgeWeight, toneWeight, contrastBoost float64, invert bool) []string {
 	dotsW, dotsH := cols*2, rows*4
 
 	tone := sampleGrid(img, bounds, dotsW, dotsH)
 	percentileStretch(tone, clipPct)
+	if invert {
+		for i, v := range tone {
+			tone[i] = 1 - v
+		}
+	}
 
 	lum, srcW, srcH := luminanceGrid(img, bounds)
 	edges := sobelMagnitude(lum, srcW, srcH)

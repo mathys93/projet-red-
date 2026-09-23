@@ -8,6 +8,7 @@ type Zone struct {
 	Boss        *boss.Boss
 	Cleared     bool
 	IsShop      bool
+	IsFarm      bool
 }
 
 type World struct {
@@ -38,13 +39,19 @@ func New() *World {
 				Description: "Un carrefour marchand entre deux affrontements : le Marchand et le Forgeron y attendent le client. Rien à craindre ici.",
 				IsShop:      true,
 			},
+			{
+				Name:        "Zone 5 - Le Terrain Vague",
+				Description: "Un chien errant garde ce bout de désert. Il revient toujours : de quoi s'entraîner autant que tu veux pour de l'XP et des Fragments.",
+				Boss:        boss.NewIggy(),
+				IsFarm:      true,
+			},
 		},
 		BonusBoss: boss.NewPucci(),
 	}
 }
 
 func (w *World) Locked(z *Zone) bool {
-	if z.IsShop {
+	if z.IsShop || z.IsFarm {
 		return false
 	}
 	var prev *Zone
@@ -52,7 +59,7 @@ func (w *World) Locked(z *Zone) bool {
 		if zone == z {
 			break
 		}
-		if !zone.IsShop {
+		if !zone.IsShop && !zone.IsFarm {
 			prev = zone
 		}
 	}
@@ -61,7 +68,7 @@ func (w *World) Locked(z *Zone) bool {
 
 func (w *World) AllCleared() bool {
 	for _, z := range w.Zones {
-		if z.IsShop {
+		if z.IsShop || z.IsFarm {
 			continue
 		}
 		if !z.Cleared {

@@ -139,17 +139,16 @@ func canPollInput() bool {
 	return consoleAvailable()
 }
 
-func pollKey() (Key, bool) {
+func pollKeyEvents() []keyEvent {
 	var pending uint32
 	ret, _, _ := procGetNumberOfEvents.Call(uintptr(stdinHandle()), uintptr(unsafe.Pointer(&pending)))
 	if ret == 0 || pending == 0 {
-		return KeyOther, false
+		return nil
 	}
 
+	var out []keyEvent
 	var rec inputRecord
 	var read uint32
-	key := KeyOther
-	found := false
 	for i := uint32(0); i < pending; i++ {
 		r, _, _ := procReadConsoleInput.Call(
 			uintptr(stdinHandle()),
@@ -160,20 +159,21 @@ func pollKey() (Key, bool) {
 		if r == 0 || read == 0 {
 			break
 		}
-		if rec.EventType != eventKey || rec.KeyEvent.KeyDown == 0 {
+		if rec.EventType != eventKey {
 			continue
 		}
+		down := rec.KeyEvent.KeyDown != 0
 		if k, ok := keyForVirtualKey(rec.KeyEvent.VirtualKeyCode); ok {
-			key, found = k, true
+			out = append(out, keyEvent{key: k, down: down})
 			continue
 		}
 		if ch := rune(rec.KeyEvent.UnicodeChar); ch != 0 {
 			if k, ok := keyForRune(ch); ok {
-				key, found = k, true
+				out = append(out, keyEvent{key: k, down: down})
 			}
 		}
 	}
-	return key, found
+	return out
 }
 
 func flushInput() {

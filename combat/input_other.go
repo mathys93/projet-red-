@@ -8,7 +8,7 @@ func exitRawMode() {}
 
 func canPollInput() bool { return false }
 
-func pollKey() (Key, bool) { return KeyOther, false }
+func pollKeyEvents() []keyEvent { return nil }
 
 func flushInput() {}
 

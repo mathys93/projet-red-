@@ -30,20 +30,22 @@ type ActOption struct {
 type AttackStyle int
 
 const (
-	AttackSweep AttackStyle = iota
-	AttackConverge
-	AttackRain
-	AttackStorm
+	AttackStroll AttackStyle = iota
+	AttackTimeStop
+	AttackErase
+	AttackBombs
+	AttackAccelerate
 )
 
 type Boss struct {
 	*character.Character
-	Art      string
-	Zone     string
-	Pattern  Pattern
-	Color    string
-	XPReward int
-	Style    AttackStyle
+	Art            string
+	Zone           string
+	Pattern        Pattern
+	Color          string
+	XPReward       int
+	FragmentReward int
+	Style          AttackStyle
 }
 
 func New(name string, level, ap, dp, lp, xpReward int, artKey string, pattern Pattern, color string) *Boss {
@@ -58,11 +60,12 @@ func New(name string, level, ap, dp, lp, xpReward int, artKey string, pattern Pa
 		color = ColorWhite
 	}
 	return &Boss{
-		Character: character.New(name, level, ap, dp, lp),
-		Art:       raw,
-		Pattern:   pattern,
-		Color:     color,
-		XPReward:  xpReward,
+		Character:      character.New(name, level, ap, dp, lp),
+		Art:            raw,
+		Pattern:        pattern,
+		Color:          color,
+		XPReward:       xpReward,
+		FragmentReward: 15,
 	}
 }
 
@@ -76,24 +79,31 @@ func (b *Boss) ActOptions(player *character.Character) []ActOption {
 
 func NewDio() *Boss {
 	b := New("DIO", 5, 10, 4, 70, 50, "dio", DioPattern{}, ColorYellow)
-	b.Style = AttackSweep
+	b.Style = AttackTimeStop
 	return b
 }
 
 func NewDiavolo() *Boss {
 	b := New("Diavolo", 8, 14, 6, 110, 90, "diavolo", DiavoloPattern{}, ColorPurple)
-	b.Style = AttackConverge
+	b.Style = AttackErase
 	return b
 }
 
 func NewKira() *Boss {
 	b := New("Yoshikage Kira", 11, 18, 8, 150, 140, "kira", KiraPattern{}, ColorCyan)
-	b.Style = AttackRain
+	b.Style = AttackBombs
 	return b
 }
 
 func NewPucci() *Boss {
 	b := New("Enrico Pucci", 15, 24, 10, 220, 260, "pucci", PucciPattern{}, ColorRed)
-	b.Style = AttackStorm
+	b.Style = AttackAccelerate
+	return b
+}
+
+func NewIggy() *Boss {
+	b := New("Iggy", 3, 5, 1, 60, 18, "iggy", IggyPattern{}, ColorWhite)
+	b.Style = AttackStroll
+	b.FragmentReward = 6
 	return b
 }

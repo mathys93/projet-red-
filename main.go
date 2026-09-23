@@ -27,8 +27,6 @@ func main() {
 	fmt.Println("Appuie sur Entrée pour ouvrir la carte...")
 	combat.WaitEnter()
 
-	const fragmentsParBoss = 15
-
 	for {
 		zone := combat.SelectZone(w)
 		if zone == nil {
@@ -41,12 +39,19 @@ func main() {
 			continue
 		}
 
+		if zone.IsFarm {
+			zone.Boss.LP = zone.Boss.MaxLP
+		}
+
 		result := combat.RunBattle(player, zone.Boss)
 		switch result {
 		case combat.ResultVictory, combat.ResultSpared:
-			zone.Cleared = true
-			player.Fragment += fragmentsParBoss
-			fmt.Printf("\nTu gagnes %d Fragments ! (Total : %d)\n", fragmentsParBoss, player.Fragment)
+			if !zone.IsFarm {
+				zone.Cleared = true
+			}
+			gain := zone.Boss.FragmentReward
+			player.Fragment += gain
+			fmt.Printf("\nTu gagnes %d Fragments ! (Total : %d)\n", gain, player.Fragment)
 			for _, msg := range player.GainXP(zone.Boss.XPReward) {
 				fmt.Println(msg)
 			}

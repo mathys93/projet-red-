@@ -19,6 +19,9 @@ var kiraArt string
 //go:embed disque_de_pucci.txt
 var pucciArt string
 
+//go:embed iggy.txt
+var iggyArt string
+
 //go:embed shop.txt
 var shopArt string
 
@@ -27,6 +30,7 @@ var registry = map[string]string{
 	"diavolo": diavoloArt,
 	"kira":    kiraArt,
 	"pucci":   pucciArt,
+	"iggy":    iggyArt,
 	"shop":    shopArt,
 }
 

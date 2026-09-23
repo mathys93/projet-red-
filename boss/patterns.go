@@ -25,6 +25,43 @@ func (DefaultPattern) ActOptions(self *Boss, player *character.Character) []ActO
 	}
 }
 
+type IggyPattern struct{}
+
+func (p IggyPattern) Act(turn int, self *Boss, player *character.Character) string {
+	if turn%3 == 0 {
+		dmg := player.TakeDamage(self.AP + 2)
+		return fmt.Sprintf("%s bondit et te mord la cheville ! %d dégâts.", self.Name, dmg)
+	}
+	dmg := player.TakeDamage(self.AP)
+	return fmt.Sprintf("%s te jette du sable au visage. %d dégâts.", self.Name, dmg)
+}
+
+func (p IggyPattern) ActOptions(self *Boss, player *character.Character) []ActOption {
+	return []ActOption{
+		{
+			Label:       "Observer",
+			Description: "Regarder ce chien pas commode.",
+			Resolve: func(self *Boss, player *character.Character) string {
+				return fmt.Sprintf("%s mâchouille un chewing-gum au café. Il ne t'accorde pas un regard.", self.Name)
+			},
+		},
+		{
+			Label:       "Offrir un café",
+			Description: "Tenter une approche gourmande.",
+			Resolve: func(self *Boss, player *character.Character) string {
+				return fmt.Sprintf("%s renifle, hésite... puis détourne la tête d'un air digne.", self.Name)
+			},
+		},
+		{
+			Label:       "Caresser",
+			Description: "Très mauvaise idée.",
+			Resolve: func(self *Boss, player *character.Character) string {
+				return fmt.Sprintf("Tu tends la main vers %s. Il grogne. Tu la retires.", self.Name)
+			},
+		},
+	}
+}
+
 type DioPattern struct{}
 
 func (p DioPattern) Act(turn int, self *Boss, player *character.Character) string {

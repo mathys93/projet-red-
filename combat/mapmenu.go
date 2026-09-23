@@ -30,6 +30,8 @@ func SelectZone(w *world.World) *world.Zone {
 			}
 			status := ""
 			switch {
+			case z.IsFarm:
+				status = colWhite + "  [toujours ouverte]" + colReset
 			case z.Cleared:
 				status = colYellow + "  [zone terminée]" + colReset
 			case w.Locked(z):
