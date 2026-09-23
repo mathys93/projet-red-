@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"ProjetRED/ascii"
+	"ProjetRED/audio"
 	"ProjetRED/boss"
 	"ProjetRED/character"
 )
@@ -381,6 +382,9 @@ var mainMenuHotkeys = map[string]int{
 func RunBattle(player *character.Character, b *boss.Boss) Result {
 	ts := newTerminalSession()
 	defer ts.restore()
+
+	audio.Play(audio.TrackFor(b.Name))
+	defer audio.Stop()
 
 	selected := 0
 	turn := 1
