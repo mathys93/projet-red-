@@ -22,6 +22,8 @@ type Character struct {
 
 	Moves []Move
 
+	Stand *Stand
+
 	SkipBossNextTurn  bool
 	StunnedTurns      int
 	HasResurrectCharm bool
@@ -47,7 +49,7 @@ func DefaultMoves() []Move {
 		{
 			Name:        "Attaque de Stand",
 			Description: "Une attaque puissante (dégâts doublés).",
-			MPCost:      5,
+			MPCost:      4,
 			Perform: func(user, target *Character) string {
 				dmg := target.TakeDamage(user.AP * 2)
 				return fmt.Sprintf("%s déchaîne son Stand sur %s ! %d dégâts.", user.Name, target.Name, dmg)
@@ -64,8 +66,8 @@ func New(name string, level, ap, dp, lp int) *Character {
 		DP:        dp,
 		LP:        lp,
 		MaxLP:     lp,
-		MP:        20,
-		MaxMP:     20,
+		MP:        30,
+		MaxMP:     30,
 		Fragment:  20,
 		Inventory: []string{},
 		Moves:     DefaultMoves(),
@@ -91,7 +93,7 @@ func (c *Character) GainXP(amount int) []string {
 		c.AP += 2
 		c.DP++
 		c.MaxLP += 15
-		c.MaxMP += 5
+		c.MaxMP += 7
 		c.LP = c.MaxLP
 		c.MP = c.MaxMP
 		messages = append(messages, fmt.Sprintf(

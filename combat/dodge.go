@@ -38,6 +38,11 @@ const (
 	homingCapX = 1.25
 	homingCapY = 0.78
 	safeRadius = 4.5
+	stopRadius = 7.5
+
+	timeStopCycle  = 42
+	timeStopFreeze = 26
+	timeStopBurst  = 35
 )
 
 const (
@@ -269,11 +274,11 @@ func burst(b bullet) []bullet {
 	return out
 }
 
-func awayFrom(hx, hy, w, h float64) (float64, float64) {
+func awayFrom(hx, hy, w, h, radius float64) (float64, float64) {
 	for i := 0; i < 24; i++ {
 		x := rand.Float64() * w
 		y := rand.Float64() * h
-		if math.Hypot(x-hx, (y-hy)/aspect) >= safeRadius {
+		if math.Hypot(x-hx, (y-hy)/aspect) >= radius {
 			return x, y
 		}
 	}
@@ -346,11 +351,11 @@ func (a attack) hint() string {
 func (a attack) speedScale(tick int) float64 {
 	switch a.style {
 	case boss.AttackTimeStop:
-		switch phase := tick % 34; {
-		case phase >= 24 && phase < 30:
+		switch phase := tick % timeStopCycle; {
+		case phase >= timeStopFreeze && phase < timeStopBurst:
 			return 0
-		case phase >= 30:
-			return 2.1
+		case phase >= timeStopBurst:
+			return 1.6
 		}
 		return 1
 
@@ -369,37 +374,37 @@ func (a attack) spawn(tick, w, h int, hx, hy float64) []bullet {
 
 	switch a.style {
 	case boss.AttackTimeStop:
-		phase := tick % 34
-		if phase == 24 {
-			out := make([]bullet, 0, 7)
-			for i := 0; i < 7; i++ {
-				x, y := awayFrom(hx, hy, fw, fh)
-				dx, dy := aim(x, y, hx, hy, 1.15)
+		phase := tick % timeStopCycle
+		if phase == timeStopFreeze {
+			out := make([]bullet, 0, 4)
+			for i := 0; i < 4; i++ {
+				x, y := awayFrom(hx, hy, fw, fh, stopRadius)
+				dx, dy := aim(x, y, hx, hy, 1.0)
 				out = append(out, bullet{x: x, y: y, dx: dx, dy: dy})
 			}
 			return out
 		}
-		if phase < 24 && phase%4 == 0 {
-			return []bullet{{x: fw, y: rand.Float64() * fh, dx: -1.15, dy: 0}}
+		if phase < timeStopFreeze && phase%6 == 0 {
+			return []bullet{{x: fw, y: rand.Float64() * fh, dx: -1.0, dy: 0}}
 		}
 		return nil
 
 	case boss.AttackErase:
-		if tick%5 != 0 {
+		if tick%8 != 0 {
 			return nil
 		}
 		x, y := edgePoint(fw, fh)
-		dx, dy := aim(x, y, hx, hy, 1.0)
+		dx, dy := aim(x, y, hx, hy, 0.65)
 		return []bullet{{x: x, y: y, dx: dx, dy: dy}}
 
 	case boss.AttackBombs:
 		var out []bullet
 		if tick%9 == 0 {
-			x, y := awayFrom(hx, hy, fw, fh)
+			x, y := awayFrom(hx, hy, fw, fh, safeRadius)
 			out = append(out, bullet{x: x, y: y, dx: 0, dy: 0, fuse: 13})
 		}
 		if tick%40 == 20 {
-			x, y := awayFrom(hx, hy, fw, fh)
+			x, y := awayFrom(hx, hy, fw, fh, safeRadius)
 			out = append(out, bullet{x: x, y: y, dx: 0, dy: 0, homing: 0.055})
 		}
 		return out

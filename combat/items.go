@@ -10,12 +10,16 @@ import (
 
 func itemDescription(item string) string {
 	switch item {
-	case "Potion de vie", "Disque de Pucci":
+	case "Potion de vie":
+		return "Restaure 20 PV."
+	case "Potion de MP":
+		return "Restaure 15 MP."
+	case "Disque de Pucci":
 		return "Restaure 50 PV."
 	case "Potion de poison":
 		return "Inflige des dégâts, ignore la Defense Power."
 	case "Arrow":
-		return "Pari risqué : réveille un Stand aléatoire, bénéfique ou non."
+		return "Éveille un Stand permanent : bonus d'attaque et nouvelle action de combat."
 	}
 	return ""
 }
@@ -44,12 +48,25 @@ func itemMenuItems(player *character.Character) ([]menuItem, []string) {
 func useItem(b *boss.Boss, player *character.Character, item string) (bool, string) {
 	switch item {
 	case "Potion de vie", "Disque de Pucci":
+		soin := 20
+		if item == "Disque de Pucci" {
+			soin = 50
+		}
 		player.RemoveItem(item)
 		before := player.LP
-		player.Heal(50)
-		msg := fmt.Sprintf("Tu utilises %s. PV restaurés.", item)
+		player.Heal(soin)
+		msg := fmt.Sprintf("Tu utilises %s. +%d PV.", item, player.LP-before)
 		animateHPChange(b, player, true, before, player.LP, msg)
 		return true, msg
+
+	case "Potion de MP":
+		player.RemoveItem(item)
+		before := player.MP
+		player.MP += 15
+		if player.MP > player.MaxMP {
+			player.MP = player.MaxMP
+		}
+		return true, fmt.Sprintf("Tu utilises %s. +%d MP (%d/%d).", item, player.MP-before, player.MP, player.MaxMP)
 
 	case "Potion de poison":
 		player.RemoveItem(item)

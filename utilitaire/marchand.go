@@ -8,6 +8,7 @@ import (
 
 var MarchandObjets = map[string]int{
 	"Potion de vie":    4,
+	"Potion de MP":     4,
 	"Disque de Pucci":  6,
 	"Potion de poison": 3,
 	"Arrow":            15,

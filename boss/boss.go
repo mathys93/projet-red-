@@ -102,7 +102,7 @@ func NewPucci() *Boss {
 }
 
 func NewIggy() *Boss {
-	b := New("Iggy", 3, 5, 1, 60, 18, "iggy", IggyPattern{}, ColorWhite)
+	b := New("Iggy", 3, 5, 1, 30, 18, "iggy", IggyPattern{}, ColorWhite)
 	b.Style = AttackStroll
 	b.FragmentReward = 6
 	return b

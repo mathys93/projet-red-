@@ -246,8 +246,12 @@ func DrawStatBar(c *character.Character) {
 	}
 	bar := colYellow + strings.Repeat("■", filled) + colWhite + strings.Repeat("□", barLen-filled) + colReset
 
-	fmt.Printf(" %-14s LV %-3d HP %s %d/%d   MP %d/%d   XP %d/%d\n",
-		c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP, c.XP, character.XPForLevel(c.Level))
+	stand := ""
+	if c.Stand != nil {
+		stand = fmt.Sprintf("   %s[%s]%s", colYellow, c.Stand.Name, colReset)
+	}
+	fmt.Printf(" %-14s LV %-3d HP %s %d/%d   MP %d/%d   XP %d/%d%s\n",
+		c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP, c.XP, character.XPForLevel(c.Level), stand)
 }
 
 func DrawEnemyBar(b *boss.Boss) {
