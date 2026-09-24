@@ -74,6 +74,9 @@ func main() {
 						fmt.Println(msg)
 					}
 					fmt.Println("\nFélicitations, tu as terminé le jeu !")
+					fmt.Println("Appuie sur Entrée pour continuer...")
+					combat.WaitEnter()
+					combat.ShowCredits()
 				case combat.ResultDefeat:
 					fmt.Println("\nGame Over.")
 				}

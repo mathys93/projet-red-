@@ -97,3 +97,15 @@ func ConfirmBonusBoss(bossName string) bool {
 		}
 	}
 }
+
+func ShowCredits() {
+	clearScreen()
+	printPadding(7)
+	fmt.Println()
+	fmt.Println(colYellow + "======================  CRÉDITS  ======================" + colReset)
+	fmt.Println()
+	fmt.Println("Réalisé par Mathys, Bennour, Ouanis et Kosai")
+	fmt.Println()
+	fmt.Println(colWhite + "Appuie sur Entrée pour quitter..." + colReset)
+	WaitEnter()
+}
