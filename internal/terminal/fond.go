@@ -1,4 +1,4 @@
-package ui
+package terminal
 
 import (
 	"io"
@@ -30,7 +30,6 @@ type screen struct {
 	shown       map[int]glyph
 	esc         []byte
 	scene       Scene
-	sceneName   string
 	tick        int
 	anim        sync.Once
 }
@@ -330,14 +329,19 @@ func (s *screen) animate() {
 	}
 }
 
-func SetScene(name string) string {
+type Scene func(t, w, h int, put func(x, y int, ch rune, fg int))
+
+func CurrentScene() Scene {
 	Out.mu.Lock()
 	defer Out.mu.Unlock()
-	prev := Out.sceneName
-	Out.sceneName = name
-	Out.scene = scenes[name]
+	return Out.scene
+}
+
+func SetScene(scene Scene) {
+	Out.mu.Lock()
+	defer Out.mu.Unlock()
+	Out.scene = scene
 	if CanPollInput() {
 		Out.anim.Do(func() { go Out.animate() })
 	}
-	return prev
 }

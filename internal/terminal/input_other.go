@@ -1,6 +1,6 @@
 //go:build !windows
 
-package ui
+package terminal
 
 func enterRawMode() {}
 
@@ -22,4 +22,4 @@ func WaitEnter() {
 	stdinScanner.Scan()
 }
 
-func readTextKey() (textKey, rune) { return textCancel, 0 }
+func ReadTextKey() (TextKey, rune) { return TextCancel, 0 }

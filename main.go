@@ -6,13 +6,14 @@ import (
 	"ProjetRED/internal/boutique"
 	"ProjetRED/internal/character"
 	"ProjetRED/internal/combat"
+	"ProjetRED/internal/terminal"
 	"ProjetRED/internal/ui"
 	"ProjetRED/internal/world"
 )
 
 func main() {
-	ui.MaximizeConsoleWindow()
-	defer ui.RestoreTerminal()
+	terminal.MaximizeConsoleWindow()
+	defer terminal.RestoreTerminal()
 
 	for {
 		switch ui.MainMenu() {
@@ -22,8 +23,8 @@ func main() {
 				continue
 			}
 			play(name)
-			if ui.QuitRequested() {
-				fmt.Fprintln(ui.Out, "\nÀ bientôt !")
+			if terminal.QuitRequested() {
+				fmt.Fprintln(terminal.Out, "\nÀ bientôt !")
 				return
 			}
 		case ui.MenuSettings:
@@ -31,21 +32,21 @@ func main() {
 		case ui.MenuCredits:
 			ui.RunCredits()
 		case ui.MenuQuit:
-			fmt.Fprintln(ui.Out, "\nÀ bientôt !")
+			fmt.Fprintln(terminal.Out, "\nÀ bientôt !")
 			return
 		}
 	}
 }
 
 func pause(msg string) {
-	fmt.Fprintln(ui.Out, msg)
-	fmt.Fprintln(ui.Out, "Appuie sur Entrée pour continuer...")
-	ui.WaitEnter()
+	fmt.Fprintln(terminal.Out, msg)
+	fmt.Fprintln(terminal.Out, "Appuie sur Entrée pour continuer...")
+	terminal.WaitEnter()
 }
 
 func play(name string) {
-	ui.EnterGame()
-	defer ui.LeaveGame()
+	terminal.EnterGame()
+	defer terminal.LeaveGame()
 
 	player := character.New(name, 1, 8, 3, 50)
 	player.AddItem("Potion de vie")
@@ -81,9 +82,9 @@ func play(name string) {
 			}
 			gain := zone.Boss.FragmentReward
 			player.Fragment += gain
-			fmt.Fprintf(ui.Out, "\nTu gagnes %d Fragments ! (Total : %d)\n", gain, player.Fragment)
+			fmt.Fprintf(terminal.Out, "\nTu gagnes %d Fragments ! (Total : %d)\n", gain, player.Fragment)
 			for _, msg := range player.GainXP(zone.Boss.XPReward) {
-				fmt.Fprintln(ui.Out, msg)
+				fmt.Fprintln(terminal.Out, msg)
 			}
 			pause("")
 		case combat.ResultDefeat:
@@ -97,9 +98,10 @@ func play(name string) {
 			switch combat.RunBattle(player, w.BonusBoss) {
 			case combat.ResultVictory, combat.ResultSpared:
 				for _, msg := range player.GainXP(w.BonusBoss.XPReward) {
-					fmt.Fprintln(ui.Out, msg)
+					fmt.Fprintln(terminal.Out, msg)
 				}
 				pause(fmt.Sprintf("\nFélicitations %s, tu as terminé le jeu !", player.Name))
+				ui.RunCredits()
 			case combat.ResultDefeat:
 				pause("\nGame Over.")
 			}

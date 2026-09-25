@@ -8,18 +8,19 @@ import (
 
 	"ProjetRED/internal/ascii"
 	"ProjetRED/internal/character"
-	"ProjetRED/internal/ui"
+	"ProjetRED/internal/fond"
+	"ProjetRED/internal/terminal"
 )
 
 func RunShop(player *character.Character) {
-	ui.SetScene(ui.SceneBoutique)
-	ts := ui.NewSession()
+	terminal.SetScene(fond.Boutique)
+	ts := terminal.NewSession()
 	defer ts.Restore()
 
 	art, _ := ascii.Get("shop")
 
 	for {
-		idx, ok := shopChoose(ts, art, "Boutique", []ui.MenuItem{
+		idx, ok := shopChoose(ts, art, "Boutique", []terminal.MenuItem{
 			{Label: "Marchand", Description: "Objets consommables, payés en Fragments."},
 			{Label: "Forgeron", Description: "Équipements fabriqués, payés en Fragments + ressources."},
 			{Label: "Partir", Description: "Retourner à la carte."},
@@ -35,18 +36,18 @@ func RunShop(player *character.Character) {
 	}
 }
 
-func runMarchand(ts *ui.Session, player *character.Character, art string) {
+func runMarchand(ts *terminal.Session, player *character.Character, art string) {
 	names := sortedKeys(MarchandObjets)
 
 	for {
-		items := make([]ui.MenuItem, len(names)+1)
+		items := make([]terminal.MenuItem, len(names)+1)
 		for i, n := range names {
-			items[i] = ui.MenuItem{
+			items[i] = terminal.MenuItem{
 				Label:       fmt.Sprintf("%s - %d Fragments", n, MarchandObjets[n]),
 				Description: Description(n),
 			}
 		}
-		items[len(names)] = ui.MenuItem{Label: "Partir"}
+		items[len(names)] = terminal.MenuItem{Label: "Partir"}
 
 		title := fmt.Sprintf("Marchand  (Fragments : %d)", player.Fragment)
 		idx, ok := shopChoose(ts, art, title, items)
@@ -55,21 +56,21 @@ func runMarchand(ts *ui.Session, player *character.Character, art string) {
 		}
 
 		Acheter(player, names[idx])
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColWhite+"(Entrée pour continuer)"+ui.ColReset)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"(Entrée pour continuer)"+terminal.ColReset)
 		ts.ReadKey()
 	}
 }
 
-func runForgeron(ts *ui.Session, player *character.Character, art string) {
+func runForgeron(ts *terminal.Session, player *character.Character, art string) {
 	names := sortedKeys(ForgeronObjets)
 
 	for {
-		items := make([]ui.MenuItem, len(names)+1)
+		items := make([]terminal.MenuItem, len(names)+1)
 		for i, n := range names {
-			items[i] = ui.MenuItem{Label: fmt.Sprintf("%s - %d Fragments", n, ForgeronObjets[n])}
+			items[i] = terminal.MenuItem{Label: fmt.Sprintf("%s - %d Fragments", n, ForgeronObjets[n])}
 		}
-		items[len(names)] = ui.MenuItem{Label: "Partir"}
+		items[len(names)] = terminal.MenuItem{Label: "Partir"}
 
 		title := fmt.Sprintf("Forgeron  (Fragments : %d)", player.Fragment)
 		idx, ok := shopChoose(ts, art, title, items)
@@ -78,62 +79,62 @@ func runForgeron(ts *ui.Session, player *character.Character, art string) {
 		}
 
 		Fabriquer(player, names[idx])
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColWhite+"(Entrée pour continuer)"+ui.ColReset)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"(Entrée pour continuer)"+terminal.ColReset)
 		ts.ReadKey()
 	}
 }
 
-func shopChoose(ts *ui.Session, art, title string, items []ui.MenuItem) (idx int, ok bool) {
+func shopChoose(ts *terminal.Session, art, title string, items []terminal.MenuItem) (idx int, ok bool) {
 	selected := 0
 	render := func() {
-		ui.ClearScreen()
-		bw, bh, aw, ah := ui.Layout()
+		terminal.ClearScreen()
+		bw, bh, aw, ah := terminal.Layout()
 		if needed := (len(items)+1)/2 + 2; needed > bh {
 			bh = needed
 		}
 		shown := ascii.Fit(art, aw, ah)
 		artHeight := len(strings.Split(shown, "\n"))
-		ui.PrintPadding(artHeight + bh + 6)
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColYellow+"  "+title+ui.ColReset)
-		ui.DrawArt(bw, shown, ui.ColYellow)
-		ui.DrawOptionGrid(bw, bh, items, selected)
+		terminal.PrintPadding(artHeight + bh + 6)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColYellow+"  "+title+terminal.ColReset)
+		terminal.DrawArt(bw, shown, terminal.ColYellow)
+		terminal.DrawOptionGrid(bw, bh, items, selected)
 		desc := ""
 		if selected < len(items) {
 			desc = items[selected].Description
 		}
-		fmt.Fprintln(ui.Out, ui.ColWhite+"* "+desc+ui.ColReset)
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColWhite+"(← ↑ ↓ → pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour revenir)"+ui.ColReset)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"* "+desc+terminal.ColReset)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"(← ↑ ↓ → pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour revenir)"+terminal.ColReset)
 	}
 	for {
-		ui.CurrentScreen = render
+		terminal.CurrentScreen = render
 		render()
 
 		key := ts.ReadKey()
 		switch key {
-		case ui.KeyUp:
+		case terminal.KeyUp:
 			if selected-2 >= 0 {
 				selected -= 2
 			}
-		case ui.KeyDown:
+		case terminal.KeyDown:
 			if selected+2 < len(items) {
 				selected += 2
 			}
-		case ui.KeyLeft:
+		case terminal.KeyLeft:
 			if selected%2 == 1 {
 				selected--
 			}
-		case ui.KeyRight:
+		case terminal.KeyRight:
 			if selected%2 == 0 && selected+1 < len(items) {
 				selected++
 			}
-		case ui.KeyBack, ui.KeyQuit:
+		case terminal.KeyBack, terminal.KeyQuit:
 			return 0, false
-		case ui.KeyEnter:
+		case terminal.KeyEnter:
 			return selected, true
-		case ui.KeyOther:
+		case terminal.KeyOther:
 			if n, err := strconv.Atoi(ts.Raw); err == nil && n >= 1 && n <= len(items) {
 				return n - 1, true
 			}

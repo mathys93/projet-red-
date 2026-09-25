@@ -1,4 +1,4 @@
-package ui
+package terminal
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func ClearScreen() {
 }
 
 func RestoreTerminal() {
-	SetScene("")
+	SetScene(nil)
 	fmt.Fprint(Out, "\033[0m\033[?25h")
 }
 
@@ -184,4 +184,8 @@ func DrawOptionGrid(width, height int, items []MenuItem, selected int) {
 type MenuItem struct {
 	Label       string
 	Description string
+}
+
+func CursorAt(row, col int) string {
+	return fmt.Sprintf("\033[%d;%dH", row, col)
 }

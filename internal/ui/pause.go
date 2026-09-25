@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"ProjetRED/internal/terminal"
 	"fmt"
 	"strings"
 )
@@ -17,12 +18,8 @@ const (
 
 var pauseLabels = []string{"PARAMÈTRES", "CRÉDITS", "QUITTER"}
 
-func CursorAt(row, col int) string {
-	return fmt.Sprintf("\033[%d;%dH", row, col)
-}
-
 func pauseOrigin() (top, left int) {
-	cols, rows := TerminalSize()
+	cols, rows := terminal.TerminalSize()
 	return max(1, (rows-pauseHeight)/2+1), max(1, (cols-pauseWidth)/2+1)
 }
 
@@ -34,7 +31,7 @@ func drawPause(selected int) {
 	var sb strings.Builder
 	title := " PAUSE "
 	side := (inner - len([]rune(title))) / 2
-	sb.WriteString(CursorAt(top, left))
+	sb.WriteString(terminal.CursorAt(top, left))
 	sb.WriteString(frame)
 	sb.WriteString("╔")
 	sb.WriteString(strings.Repeat("═", side))
@@ -42,14 +39,14 @@ func drawPause(selected int) {
 	sb.WriteString(strings.Repeat("═", inner-side-len([]rune(title))))
 	sb.WriteString("╗")
 	for r := 1; r < pauseHeight-1; r++ {
-		sb.WriteString(CursorAt(top+r, left))
+		sb.WriteString(terminal.CursorAt(top+r, left))
 		sb.WriteString(frame)
 		sb.WriteString("║")
-		sb.WriteString(CursorAt(top+r, left+pauseWidth-1))
+		sb.WriteString(terminal.CursorAt(top+r, left+pauseWidth-1))
 		sb.WriteString(frame)
 		sb.WriteString("║")
 	}
-	sb.WriteString(CursorAt(top+pauseHeight-1, left))
+	sb.WriteString(terminal.CursorAt(top+pauseHeight-1, left))
 	sb.WriteString(frame)
 	sb.WriteString("╚")
 	sb.WriteString(strings.Repeat("═", inner))
@@ -59,11 +56,11 @@ func drawPause(selected int) {
 	for i, label := range pauseLabels {
 		bg, heart := bgGrey, "  "
 		if i == selected {
-			bg, heart = bgWhite, ColRed+"❤ "
+			bg, heart = bgWhite, terminal.ColRed+"❤ "
 		}
 		pad := pauseButton - 2 - len([]rune(label))
 		l, r := pad/2, pad-pad/2
-		sb.WriteString(CursorAt(top+2+2*i, btnLeft))
+		sb.WriteString(terminal.CursorAt(top+2+2*i, btnLeft))
 		sb.WriteString(bg)
 		sb.WriteString(heart)
 		sb.WriteString(egaBlue)
@@ -74,43 +71,45 @@ func drawPause(selected int) {
 
 	hint := "Entrée : valider · Échap : reprendre"
 	hintLeft := left + (pauseWidth-len([]rune(hint)))/2
-	sb.WriteString(CursorAt(top+pauseHeight-2, hintLeft))
+	sb.WriteString(terminal.CursorAt(top+pauseHeight-2, hintLeft))
 	sb.WriteString(frame)
 	sb.WriteString(hint)
 
-	sb.WriteString(ColReset)
-	fmt.Fprint(Out, sb.String())
+	sb.WriteString(terminal.ColReset)
+	fmt.Fprint(terminal.Out, sb.String())
 }
 
-func OpenPause() {
-	inPause = true
-	defer func() { inPause = false }()
-	FlushInput()
+func init() {
+	terminal.OnPause = openPause
+}
 
-	ts := &Session{}
+func openPause() {
+	terminal.FlushInput()
+
+	ts := &terminal.Session{}
 	selected := 0
 	for {
 		drawPause(selected)
 		switch ts.ReadKey() {
-		case KeyUp, KeyLeft:
+		case terminal.KeyUp, terminal.KeyLeft:
 			selected = (selected + len(pauseLabels) - 1) % len(pauseLabels)
-		case KeyDown, KeyRight:
+		case terminal.KeyDown, terminal.KeyRight:
 			selected = (selected + 1) % len(pauseLabels)
-		case KeyPause, KeyBack:
-			redraw()
+		case terminal.KeyPause, terminal.KeyBack:
+			terminal.Redraw()
 			return
-		case KeyQuit:
+		case terminal.KeyQuit:
 			return
-		case KeyEnter:
+		case terminal.KeyEnter:
 			switch selected {
 			case 0:
 				RunSettings()
-				redraw()
+				terminal.Redraw()
 			case 1:
 				RunCredits()
-				redraw()
+				terminal.Redraw()
 			case 2:
-				quitRequested = true
+				terminal.RequestQuit()
 				return
 			}
 		}

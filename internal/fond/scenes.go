@@ -1,30 +1,6 @@
-package ui
+package fond
 
 import "math"
-
-type Scene func(t, w, h int, put func(x, y int, ch rune, fg int))
-
-const (
-	SceneMenu     = "menu"
-	SceneCarte    = "carte"
-	SceneBoutique = "boutique"
-	SceneDio      = "dio"
-	SceneDiavolo  = "diavolo"
-	SceneKira     = "kira"
-	ScenePucci    = "pucci"
-	SceneIggy     = "iggy"
-)
-
-var scenes = map[string]Scene{
-	SceneMenu:     sceneEtoiles,
-	SceneCarte:    sceneCarte,
-	SceneBoutique: sceneBoutique,
-	SceneDio:      sceneDio,
-	SceneDiavolo:  sceneDiavolo,
-	SceneKira:     sceneKira,
-	ScenePucci:    scenePucci,
-	SceneIggy:     sceneIggy,
-}
 
 func hash(a, b, c int) int {
 	h := uint32(a)*374761393 + uint32(b)*668265263 + uint32(c)*2246822519 + 3266489917
@@ -40,7 +16,7 @@ func wrap(v, n int) int {
 	return ((v % n) + n) % n
 }
 
-func sceneEtoiles(t, w, h int, put func(int, int, rune, int)) {
+func Etoiles(t, w, h int, put func(int, int, rune, int)) {
 	for y := range h {
 		for x := range w {
 			v := hash(x, y, 1)
@@ -77,7 +53,7 @@ func sceneEtoiles(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneCarte(t, w, h int, put func(int, int, rune, int)) {
+func Carte(t, w, h int, put func(int, int, rune, int)) {
 	for y := range h {
 		for x := range w {
 			v := hash(x, y, 2)
@@ -117,7 +93,7 @@ func sceneCarte(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneBoutique(t, w, h int, put func(int, int, rune, int)) {
+func Boutique(t, w, h int, put func(int, int, rune, int)) {
 	n := max(w*h/70, 8)
 	for i := range n {
 		x0 := hash(i, 1, 5) % max(w, 1)
@@ -145,7 +121,7 @@ func sceneBoutique(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneDio(t, w, h int, put func(int, int, rune, int)) {
+func Dio(t, w, h int, put func(int, int, rune, int)) {
 	const cycle, run = 90, 64
 	stopped := t%cycle >= run
 	te := (t/cycle)*run + min(t%cycle, run)
@@ -176,7 +152,7 @@ func sceneDio(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneDiavolo(t, w, h int, put func(int, int, rune, int)) {
+func Diavolo(t, w, h int, put func(int, int, rune, int)) {
 	const cycle = 56
 	p := t % cycle
 	if p >= 42 && p < 49 {
@@ -216,7 +192,7 @@ func sceneDiavolo(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneKira(t, w, h int, put func(int, int, rune, int)) {
+func Kira(t, w, h int, put func(int, int, rune, int)) {
 	const cycle = 44
 	n := max(w*h/220, 5)
 	for i := range n {
@@ -258,7 +234,7 @@ func sceneKira(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func scenePucci(t, w, h int, put func(int, int, rune, int)) {
+func Pucci(t, w, h int, put func(int, int, rune, int)) {
 	const cycle = 170.0
 	tc := float64(t % int(cycle))
 	speed := 0.15 + 3.2*tc*tc/(cycle*cycle)
@@ -290,7 +266,7 @@ func scenePucci(t, w, h int, put func(int, int, rune, int)) {
 	}
 }
 
-func sceneIggy(t, w, h int, put func(int, int, rune, int)) {
+func Iggy(t, w, h int, put func(int, int, rune, int)) {
 	n := max(w*h/45, 10)
 	for i := range n {
 		v := 1 + hash(i, 1, 20)%3

@@ -7,59 +7,59 @@ import (
 
 	"ProjetRED/internal/boss"
 	"ProjetRED/internal/character"
-	"ProjetRED/internal/ui"
+	"ProjetRED/internal/terminal"
 )
 
-func chooseOption(ts *ui.Session, b *boss.Boss, title string, items []ui.MenuItem) (idx int, ok bool) {
+func chooseOption(ts *terminal.Session, b *boss.Boss, title string, items []terminal.MenuItem) (idx int, ok bool) {
 	selected := 0
 	render := func() {
-		ui.ClearScreen()
-		bw, bh, aw, ah := ui.Layout()
+		terminal.ClearScreen()
+		bw, bh, aw, ah := terminal.Layout()
 		if needed := (len(items)+1)/2 + 2; needed > bh {
 			bh = needed
 		}
 		art := fitArt(b, aw, ah)
 		artHeight := len(strings.Split(art, "\n"))
-		ui.PrintPadding(artHeight + bh + 6)
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColYellow+"  "+title+ui.ColReset)
-		ui.DrawArt(bw, art, b.Color)
-		ui.DrawOptionGrid(bw, bh, items, selected)
+		terminal.PrintPadding(artHeight + bh + 6)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColYellow+"  "+title+terminal.ColReset)
+		terminal.DrawArt(bw, art, b.Color)
+		terminal.DrawOptionGrid(bw, bh, items, selected)
 		desc := ""
 		if selected < len(items) {
 			desc = items[selected].Description
 		}
-		fmt.Fprintln(ui.Out, ui.ColWhite+"* "+desc+ui.ColReset)
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColWhite+"(← ↑ ↓ → pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour annuler)"+ui.ColReset)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"* "+desc+terminal.ColReset)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"(← ↑ ↓ → pour naviguer, un chiffre pour choisir direct, Entrée pour valider, X pour annuler)"+terminal.ColReset)
 	}
 	for {
-		ui.CurrentScreen = render
+		terminal.CurrentScreen = render
 		render()
 
 		key := ts.ReadKey()
 		switch key {
-		case ui.KeyUp:
+		case terminal.KeyUp:
 			if selected-2 >= 0 {
 				selected -= 2
 			}
-		case ui.KeyDown:
+		case terminal.KeyDown:
 			if selected+2 < len(items) {
 				selected += 2
 			}
-		case ui.KeyLeft:
+		case terminal.KeyLeft:
 			if selected%2 == 1 {
 				selected--
 			}
-		case ui.KeyRight:
+		case terminal.KeyRight:
 			if selected%2 == 0 && selected+1 < len(items) {
 				selected++
 			}
-		case ui.KeyBack, ui.KeyQuit:
+		case terminal.KeyBack, terminal.KeyQuit:
 			return 0, false
-		case ui.KeyEnter:
+		case terminal.KeyEnter:
 			return selected, true
-		case ui.KeyOther:
+		case terminal.KeyOther:
 			if n, err := strconv.Atoi(ts.Raw); err == nil && n >= 1 && n <= len(items) {
 				return n - 1, true
 			}
@@ -67,22 +67,22 @@ func chooseOption(ts *ui.Session, b *boss.Boss, title string, items []ui.MenuIte
 	}
 }
 
-func fightMenuItems(player *character.Character) []ui.MenuItem {
-	items := make([]ui.MenuItem, len(player.Moves))
+func fightMenuItems(player *character.Character) []terminal.MenuItem {
+	items := make([]terminal.MenuItem, len(player.Moves))
 	for i, m := range player.Moves {
 		desc := m.Description
 		if m.MPCost > 0 {
 			desc = fmt.Sprintf("%s (coût : %d MP)", desc, m.MPCost)
 		}
-		items[i] = ui.MenuItem{Label: m.Name, Description: desc}
+		items[i] = terminal.MenuItem{Label: m.Name, Description: desc}
 	}
 	return items
 }
 
-func actMenuItems(options []boss.ActOption) []ui.MenuItem {
-	items := make([]ui.MenuItem, len(options))
+func actMenuItems(options []boss.ActOption) []terminal.MenuItem {
+	items := make([]terminal.MenuItem, len(options))
 	for i, o := range options {
-		items[i] = ui.MenuItem{Label: o.Label, Description: o.Description}
+		items[i] = terminal.MenuItem{Label: o.Label, Description: o.Description}
 	}
 	return items
 }

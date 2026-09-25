@@ -7,10 +7,10 @@ import (
 	"ProjetRED/internal/boss"
 	"ProjetRED/internal/boutique"
 	"ProjetRED/internal/character"
-	"ProjetRED/internal/ui"
+	"ProjetRED/internal/terminal"
 )
 
-func itemMenuItems(player *character.Character) ([]ui.MenuItem, []string) {
+func itemMenuItems(player *character.Character) ([]terminal.MenuItem, []string) {
 	var names []string
 	counts := map[string]int{}
 	for _, it := range player.Inventory {
@@ -20,13 +20,13 @@ func itemMenuItems(player *character.Character) ([]ui.MenuItem, []string) {
 		counts[it]++
 	}
 
-	items := make([]ui.MenuItem, len(names))
+	items := make([]terminal.MenuItem, len(names))
 	for i, name := range names {
 		label := name
 		if counts[name] > 1 {
 			label = fmt.Sprintf("%s x%d", name, counts[name])
 		}
-		items[i] = ui.MenuItem{Label: label, Description: boutique.Description(name)}
+		items[i] = terminal.MenuItem{Label: label, Description: boutique.Description(name)}
 	}
 	return items, names
 }

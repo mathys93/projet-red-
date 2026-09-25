@@ -9,7 +9,7 @@ import (
 
 	"ProjetRED/internal/boss"
 	"ProjetRED/internal/character"
-	"ProjetRED/internal/ui"
+	"ProjetRED/internal/terminal"
 )
 
 type bullet struct {
@@ -59,25 +59,25 @@ type heldDir struct {
 	lastSeen int
 }
 
-func dirIndex(k ui.Key) (int, bool) {
+func dirIndex(k terminal.Key) (int, bool) {
 	switch k {
-	case ui.KeyUp:
+	case terminal.KeyUp:
 		return dirUp, true
-	case ui.KeyDown:
+	case terminal.KeyDown:
 		return dirDown, true
-	case ui.KeyLeft:
+	case terminal.KeyLeft:
 		return dirLeft, true
-	case ui.KeyRight:
+	case terminal.KeyRight:
 		return dirRight, true
 	}
 	return 0, false
 }
 
 func dodgeLayout() (boxW, boxH, artW, artH int) {
-	boxW, boxH, artW, artH = ui.Layout()
+	boxW, boxH, artW, artH = terminal.Layout()
 	grow := 8
-	if artH-grow < ui.MinArtHeight {
-		grow = artH - ui.MinArtHeight
+	if artH-grow < terminal.MinArtHeight {
+		grow = artH - terminal.MinArtHeight
 	}
 	if grow < 0 {
 		grow = 0
@@ -86,7 +86,7 @@ func dodgeLayout() (boxW, boxH, artW, artH int) {
 }
 
 func RunDodge(b *boss.Boss, player *character.Character) (hit bool, quit bool) {
-	if !ui.CanPollInput() {
+	if !terminal.CanPollInput() {
 		return true, false
 	}
 
@@ -110,32 +110,32 @@ func RunDodge(b *boss.Boss, player *character.Character) (hit bool, quit bool) {
 	drawn := false
 
 	drawHeader := func() {
-		ui.ClearScreen()
-		ui.PrintPadding(artHeight + boxH + 7)
-		fmt.Fprintln(ui.Out)
-		fmt.Fprintln(ui.Out, ui.ColYellow+"  "+b.Zone+ui.ColReset)
-		ui.DrawArt(boxW, art, b.Color)
+		terminal.ClearScreen()
+		terminal.PrintPadding(artHeight + boxH + 7)
+		fmt.Fprintln(terminal.Out)
+		fmt.Fprintln(terminal.Out, terminal.ColYellow+"  "+b.Zone+terminal.ColReset)
+		terminal.DrawArt(boxW, art, b.Color)
 	}
 	drawBlock := func() {
 		drawArena(boxW, w, h, cx, cy, bullets, hiddenNow)
-		fmt.Fprintln(ui.Out)
+		fmt.Fprintln(terminal.Out)
 		DrawEnemyBar(b)
 		DrawStatBar(player)
-		fmt.Fprintln(ui.Out, ui.ColWhite+"\n"+atk.hint()+ui.ColReset)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"\n"+atk.hint()+terminal.ColReset)
 		drawn = true
 	}
-	ui.CurrentScreen = func() {
+	terminal.CurrentScreen = func() {
 		drawHeader()
 		drawBlock()
 	}
 
 	drawHeader()
-	ui.FlushInput()
+	terminal.FlushInput()
 
 	for tick := range dodgeDuration {
 		paused := false
-		for _, ev := range ui.PollKeyEvents() {
-			if ev.Key == ui.KeyPause && ev.Down {
+		for _, ev := range terminal.PollKeyEvents() {
+			if ev.Key == terminal.KeyPause && ev.Down {
 				paused = true
 				break
 			}
@@ -165,12 +165,12 @@ func RunDodge(b *boss.Boss, player *character.Character) (hit bool, quit bool) {
 		}
 
 		if paused {
-			ui.OpenPause()
-			if ui.QuitRequested() {
+			terminal.Pause()
+			if terminal.QuitRequested() {
 				return false, true
 			}
 			held = [4]heldDir{}
-			ui.FlushInput()
+			terminal.FlushInput()
 		}
 
 		for d := range held {
@@ -232,7 +232,7 @@ func RunDodge(b *boss.Boss, player *character.Character) (hit bool, quit bool) {
 
 		hiddenNow = atk.hidden(tick)
 		if drawn {
-			fmt.Fprintf(ui.Out, "\033[%dA", block)
+			fmt.Fprintf(terminal.Out, "\033[%dA", block)
 		}
 		drawBlock()
 
@@ -335,27 +335,27 @@ func drawArena(boxW, w, h, hx, hy int, bullets []bullet, hidden bool) {
 		}
 	}
 
-	fmt.Fprintln(ui.Out, pad+ui.ColWhite+"┌"+strings.Repeat("─", w)+"┐"+ui.ColReset)
+	fmt.Fprintln(terminal.Out, pad+terminal.ColWhite+"┌"+strings.Repeat("─", w)+"┐"+terminal.ColReset)
 	for y := range h {
 		var sb strings.Builder
 		for x := range w {
 			switch {
 			case x == hx && y == hy:
-				sb.WriteString(ui.ColRed + "❤")
-				sb.WriteString(ui.ColReset)
+				sb.WriteString(terminal.ColRed + "❤")
+				sb.WriteString(terminal.ColReset)
 			case grid[y][x] == 2:
-				sb.WriteString(ui.ColRed + "◉")
-				sb.WriteString(ui.ColReset)
+				sb.WriteString(terminal.ColRed + "◉")
+				sb.WriteString(terminal.ColReset)
 			case grid[y][x] == 1:
-				sb.WriteString(ui.ColYellow + "◆")
-				sb.WriteString(ui.ColReset)
+				sb.WriteString(terminal.ColYellow + "◆")
+				sb.WriteString(terminal.ColReset)
 			default:
 				sb.WriteByte(' ')
 			}
 		}
-		fmt.Fprintln(ui.Out, pad+ui.ColWhite+"│"+ui.ColReset+sb.String()+ui.ColWhite+"│"+ui.ColReset)
+		fmt.Fprintln(terminal.Out, pad+terminal.ColWhite+"│"+terminal.ColReset+sb.String()+terminal.ColWhite+"│"+terminal.ColReset)
 	}
-	fmt.Fprintln(ui.Out, pad+ui.ColWhite+"└"+strings.Repeat("─", w)+"┘"+ui.ColReset)
+	fmt.Fprintln(terminal.Out, pad+terminal.ColWhite+"└"+strings.Repeat("─", w)+"┘"+terminal.ColReset)
 }
 
 type attack struct {

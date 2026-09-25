@@ -9,7 +9,8 @@ import (
 	"ProjetRED/internal/audio"
 	"ProjetRED/internal/boss"
 	"ProjetRED/internal/character"
-	"ProjetRED/internal/ui"
+	"ProjetRED/internal/fond"
+	"ProjetRED/internal/terminal"
 )
 
 func fitArt(b *boss.Boss, artW, artH int) string {
@@ -36,11 +37,11 @@ func DrawActionButtons(width int, selected int) {
 
 	var top, mid, bot strings.Builder
 	for i, label := range labels {
-		col := ui.ColWhite
+		col := terminal.ColWhite
 		heart := "  "
 		if i == selected {
-			col = ui.ColRed
-			heart = ui.ColRed + "❤ " + ui.ColReset
+			col = terminal.ColRed
+			heart = terminal.ColRed + "❤ " + terminal.ColReset
 		}
 		pad := max(inner-2-len([]rune(label)), 0)
 		left := pad / 2
@@ -51,35 +52,35 @@ func DrawActionButtons(width int, selected int) {
 		top.WriteString("┌")
 		top.WriteString(strings.Repeat("─", inner))
 		top.WriteString("┐")
-		top.WriteString(ui.ColReset)
+		top.WriteString(terminal.ColReset)
 		mid.WriteString(margin)
 		mid.WriteString(col)
 		mid.WriteString("│")
-		mid.WriteString(ui.ColReset)
+		mid.WriteString(terminal.ColReset)
 		mid.WriteString(heart)
 		mid.WriteString(strings.Repeat(" ", left))
 		mid.WriteString(col)
 		mid.WriteString(label)
-		mid.WriteString(ui.ColReset)
+		mid.WriteString(terminal.ColReset)
 		mid.WriteString(strings.Repeat(" ", right))
 		mid.WriteString(col)
 		mid.WriteString("│")
-		mid.WriteString(ui.ColReset)
+		mid.WriteString(terminal.ColReset)
 		bot.WriteString(margin)
 		bot.WriteString(col)
 		bot.WriteString("└")
 		bot.WriteString(strings.Repeat("─", inner))
 		bot.WriteString("┘")
-		bot.WriteString(ui.ColReset)
+		bot.WriteString(terminal.ColReset)
 	}
 	top.WriteString(margin)
 	mid.WriteString(margin)
 	bot.WriteString(margin)
 
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, top.String())
-	fmt.Fprintln(ui.Out, mid.String())
-	fmt.Fprintln(ui.Out, bot.String())
+	fmt.Fprintln(terminal.Out)
+	fmt.Fprintln(terminal.Out, top.String())
+	fmt.Fprintln(terminal.Out, mid.String())
+	fmt.Fprintln(terminal.Out, bot.String())
 }
 
 func DrawStatBar(c *character.Character) {
@@ -91,13 +92,13 @@ func DrawStatBar(c *character.Character) {
 	if filled > barLen {
 		filled = barLen
 	}
-	bar := ui.ColYellow + strings.Repeat("■", filled) + ui.ColWhite + strings.Repeat("□", barLen-filled) + ui.ColReset
+	bar := terminal.ColYellow + strings.Repeat("■", filled) + terminal.ColWhite + strings.Repeat("□", barLen-filled) + terminal.ColReset
 
 	stand := ""
 	if c.Stand != nil {
-		stand = fmt.Sprintf("   %s[%s]%s", ui.ColYellow, c.Stand.Name, ui.ColReset)
+		stand = fmt.Sprintf("   %s[%s]%s", terminal.ColYellow, c.Stand.Name, terminal.ColReset)
 	}
-	fmt.Fprintf(ui.Out, " %-14s LV %-3d HP %s %d/%d   MP %d/%d   XP %d/%d%s\n",
+	fmt.Fprintf(terminal.Out, " %-14s LV %-3d HP %s %d/%d   MP %d/%d   XP %d/%d%s\n",
 		c.Name, c.Level, bar, c.LP, c.MaxLP, c.MP, c.MaxMP, c.XP, character.XPForLevel(c.Level), stand)
 }
 
@@ -113,58 +114,58 @@ func DrawEnemyBar(b *boss.Boss) {
 	if filled < 0 {
 		filled = 0
 	}
-	bar := ui.ColRed + strings.Repeat("■", filled) + ui.ColWhite + strings.Repeat("□", barLen-filled) + ui.ColReset
+	bar := terminal.ColRed + strings.Repeat("■", filled) + terminal.ColWhite + strings.Repeat("□", barLen-filled) + terminal.ColReset
 
-	fmt.Fprintf(ui.Out, " %-14s LV %-3d HP %s %d/%d\n", b.Name, b.Level, bar, b.LP, b.MaxLP)
+	fmt.Fprintf(terminal.Out, " %-14s LV %-3d HP %s %d/%d\n", b.Name, b.Level, bar, b.LP, b.MaxLP)
 }
 
 func RenderBattleScreen(b *boss.Boss, player *character.Character, selected int, message string) {
-	ui.CurrentScreen = func() { RenderBattleScreen(b, player, selected, message) }
-	ui.ClearScreen()
-	bw, bh, aw, ah := ui.Layout()
+	terminal.CurrentScreen = func() { RenderBattleScreen(b, player, selected, message) }
+	terminal.ClearScreen()
+	bw, bh, aw, ah := terminal.Layout()
 	art := fitArt(b, aw, ah)
 	artHeight := len(strings.Split(art, "\n"))
 	contentHeight := artHeight + bh + 11
 	if message != "" {
 		contentHeight++
 	}
-	ui.PrintPadding(contentHeight)
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, ui.ColYellow+"  "+b.Zone+ui.ColReset)
-	ui.DrawArt(bw, art, b.Color)
-	ui.DrawEmptyBox(bw, bh)
-	fmt.Fprintln(ui.Out)
+	terminal.PrintPadding(contentHeight)
+	fmt.Fprintln(terminal.Out)
+	fmt.Fprintln(terminal.Out, terminal.ColYellow+"  "+b.Zone+terminal.ColReset)
+	terminal.DrawArt(bw, art, b.Color)
+	terminal.DrawEmptyBox(bw, bh)
+	fmt.Fprintln(terminal.Out)
 	DrawEnemyBar(b)
 	if message != "" {
-		fmt.Fprintln(ui.Out, ui.ColWhite+"* "+message+ui.ColReset)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"* "+message+terminal.ColReset)
 	}
 	DrawStatBar(player)
 	DrawActionButtons(bw, selected)
-	fmt.Fprintln(ui.Out, ui.ColWhite+"\n(← → pour choisir, Entrée pour valider, F/A/I/M en raccourci, Échap pour le menu pause)"+ui.ColReset)
+	fmt.Fprintln(terminal.Out, terminal.ColWhite+"\n(← → pour choisir, Entrée pour valider, F/A/I/M en raccourci, Échap pour le menu pause)"+terminal.ColReset)
 }
 
 func RenderTurnMessage(b *boss.Boss, player *character.Character, message string) {
-	ui.CurrentScreen = func() { RenderTurnMessage(b, player, message) }
-	ui.ClearScreen()
-	bw, bh, aw, ah := ui.Layout()
+	terminal.CurrentScreen = func() { RenderTurnMessage(b, player, message) }
+	terminal.ClearScreen()
+	bw, bh, aw, ah := terminal.Layout()
 	art := fitArt(b, aw, ah)
 	artHeight := len(strings.Split(art, "\n"))
 	contentHeight := artHeight + bh + 7
 	if message != "" {
 		contentHeight++
 	}
-	ui.PrintPadding(contentHeight)
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, ui.ColYellow+"  "+b.Zone+ui.ColReset)
-	ui.DrawArt(bw, art, b.Color)
-	ui.DrawEmptyBox(bw, bh)
-	fmt.Fprintln(ui.Out)
+	terminal.PrintPadding(contentHeight)
+	fmt.Fprintln(terminal.Out)
+	fmt.Fprintln(terminal.Out, terminal.ColYellow+"  "+b.Zone+terminal.ColReset)
+	terminal.DrawArt(bw, art, b.Color)
+	terminal.DrawEmptyBox(bw, bh)
+	fmt.Fprintln(terminal.Out)
 	DrawEnemyBar(b)
 	if message != "" {
-		fmt.Fprintln(ui.Out, ui.ColWhite+"* "+message+ui.ColReset)
+		fmt.Fprintln(terminal.Out, terminal.ColWhite+"* "+message+terminal.ColReset)
 	}
 	DrawStatBar(player)
-	fmt.Fprintln(ui.Out, ui.ColWhite+"\n(Entrée pour continuer, Échap pour le menu pause)"+ui.ColReset)
+	fmt.Fprintln(terminal.Out, terminal.ColWhite+"\n(Entrée pour continuer, Échap pour le menu pause)"+terminal.ColReset)
 }
 
 func animateHPChange(b *boss.Boss, player *character.Character, isPlayer bool, before, after int, message string) {
@@ -195,8 +196,8 @@ func animateHPChange(b *boss.Boss, player *character.Character, isPlayer bool, b
 	RenderTurnMessage(b, player, message)
 }
 
-func waitContinue(ts *ui.Session) bool {
-	return ts.ReadKey() != ui.KeyQuit
+func waitContinue(ts *terminal.Session) bool {
+	return ts.ReadKey() != terminal.KeyQuit
 }
 
 func tryResurrect(player *character.Character) bool {
@@ -224,31 +225,32 @@ var mainMenuHotkeys = map[string]int{
 	"m": 3, "4": 3,
 }
 
-func sceneFor(b *boss.Boss) string {
+func sceneFor(b *boss.Boss) terminal.Scene {
 	switch b.Style {
 	case boss.AttackTimeStop:
-		return ui.SceneDio
+		return fond.Dio
 	case boss.AttackErase:
-		return ui.SceneDiavolo
+		return fond.Diavolo
 	case boss.AttackBombs:
-		return ui.SceneKira
+		return fond.Kira
 	case boss.AttackAccelerate:
-		return ui.ScenePucci
+		return fond.Pucci
 	}
-	return ui.SceneIggy
+	return fond.Iggy
 }
 
 func RunBattle(player *character.Character, b *boss.Boss) Result {
-	ts := ui.NewSession()
+	ts := terminal.NewSession()
 	defer ts.Restore()
 
 	audio.Play(audio.TrackFor(b.Name))
 	defer audio.Stop()
 
-	prevScene := ui.SetScene(sceneFor(b))
+	prevScene := terminal.CurrentScene()
+	terminal.SetScene(sceneFor(b))
 	defer func() {
-		ui.SetScene(prevScene)
-		ui.ClearScreen()
+		terminal.SetScene(prevScene)
+		terminal.ClearScreen()
 	}()
 
 	selected := 0
@@ -261,15 +263,15 @@ func RunBattle(player *character.Character, b *boss.Boss) Result {
 		key := ts.ReadKey()
 		chosen := -1
 		switch key {
-		case ui.KeyLeft, ui.KeyUp:
+		case terminal.KeyLeft, terminal.KeyUp:
 			selected = (selected + 3) % 4
-		case ui.KeyRight, ui.KeyDown:
+		case terminal.KeyRight, terminal.KeyDown:
 			selected = (selected + 1) % 4
-		case ui.KeyQuit:
+		case terminal.KeyQuit:
 			return ResultQuit
-		case ui.KeyEnter:
+		case terminal.KeyEnter:
 			chosen = selected
-		case ui.KeyOther:
+		case terminal.KeyOther:
 			if idx, ok := mainMenuHotkeys[ts.Raw]; ok {
 				selected = idx
 				chosen = idx

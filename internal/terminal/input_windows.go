@@ -1,6 +1,6 @@
 //go:build windows
 
-package ui
+package terminal
 
 import (
 	"os"
@@ -207,7 +207,7 @@ func WaitEnter() {
 	readConsoleKey()
 }
 
-func readTextKey() (textKey, rune) {
+func ReadTextKey() (TextKey, rune) {
 	var rec inputRecord
 	var read uint32
 	for {
@@ -218,21 +218,21 @@ func readTextKey() (textKey, rune) {
 			uintptr(unsafe.Pointer(&read)),
 		)
 		if ret == 0 {
-			return textCancel, 0
+			return TextCancel, 0
 		}
 		if read == 0 || rec.EventType != eventKey || rec.KeyEvent.KeyDown == 0 {
 			continue
 		}
 		switch rec.KeyEvent.VirtualKeyCode {
 		case vkReturn:
-			return textEnter, 0
+			return TextEnter, 0
 		case vkEscape:
-			return textCancel, 0
+			return TextCancel, 0
 		case vkBack:
-			return textBackspace, 0
+			return TextBackspace, 0
 		}
 		if ch := rune(rec.KeyEvent.UnicodeChar); ch >= 32 {
-			return textChar, ch
+			return TextChar, ch
 		}
 	}
 }

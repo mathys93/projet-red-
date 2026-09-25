@@ -1,4 +1,4 @@
-package ui
+package terminal
 
 import (
 	"bufio"
@@ -26,13 +26,13 @@ type KeyEvent struct {
 	Down bool
 }
 
-type textKey int
+type TextKey int
 
 const (
-	textChar textKey = iota
-	textBackspace
-	textEnter
-	textCancel
+	TextChar TextKey = iota
+	TextBackspace
+	TextEnter
+	TextCancel
 )
 
 var stdinScanner = bufio.NewScanner(os.Stdin)
@@ -59,7 +59,22 @@ func QuitRequested() bool {
 	return quitRequested
 }
 
-func redraw() {
+var OnPause func()
+
+func Pause() {
+	if OnPause == nil || inPause {
+		return
+	}
+	inPause = true
+	defer func() { inPause = false }()
+	OnPause()
+}
+
+func RequestQuit() {
+	quitRequested = true
+}
+
+func Redraw() {
 	if CurrentScreen != nil {
 		CurrentScreen()
 	}
@@ -95,7 +110,7 @@ func (ts *Session) ReadKey() Key {
 			return KeyQuit
 		}
 		if k == KeyPause && gameActive && !inPause {
-			OpenPause()
+			Pause()
 			continue
 		}
 		return k
@@ -149,4 +164,11 @@ func (ts *Session) readLineKey() Key {
 		}
 	}
 	return KeyOther
+}
+
+func ReadLine() (string, bool) {
+	if !stdinScanner.Scan() {
+		return "", false
+	}
+	return stdinScanner.Text(), true
 }
