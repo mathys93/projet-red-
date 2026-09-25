@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	if *in == "" || *out == "" {
-		fmt.Fprintln(os.Stderr, "usage: img2ascii -in image.png -out ascii/nom.txt -cols 60 [-crop x,y,w,h] [-rows N] [-edge 1.2] [-tone 0.8] [-contrast 2.0] [-preview debug.png]")
+		fmt.Fprintln(os.Stderr, "usage: img2ascii -in image.png -out assets/art/nom.txt -cols 60 [-crop x,y,w,h] [-rows N] [-edge 1.2] [-tone 0.8] [-contrast 2.0] [-preview debug.png]")
 		os.Exit(2)
 	}
 

@@ -3,15 +3,51 @@ package main
 import (
 	"fmt"
 
-	"ProjetRED/character"
-	"ProjetRED/combat"
-	"ProjetRED/world"
+	"ProjetRED/internal/boutique"
+	"ProjetRED/internal/character"
+	"ProjetRED/internal/combat"
+	"ProjetRED/internal/ui"
+	"ProjetRED/internal/world"
 )
 
 func main() {
-	combat.MaximizeConsoleWindow()
+	ui.MaximizeConsoleWindow()
+	defer ui.RestoreTerminal()
 
-	player := character.New("Personnage 1", 1, 8, 3, 50)
+	for {
+		switch ui.MainMenu() {
+		case ui.MenuStart:
+			name, ok := ui.PromptName()
+			if !ok {
+				continue
+			}
+			play(name)
+			if ui.QuitRequested() {
+				fmt.Fprintln(ui.Out, "\nÀ bientôt !")
+				return
+			}
+		case ui.MenuSettings:
+			ui.RunSettings()
+		case ui.MenuCredits:
+			ui.RunCredits()
+		case ui.MenuQuit:
+			fmt.Fprintln(ui.Out, "\nÀ bientôt !")
+			return
+		}
+	}
+}
+
+func pause(msg string) {
+	fmt.Fprintln(ui.Out, msg)
+	fmt.Fprintln(ui.Out, "Appuie sur Entrée pour continuer...")
+	ui.WaitEnter()
+}
+
+func play(name string) {
+	ui.EnterGame()
+	defer ui.LeaveGame()
+
+	player := character.New(name, 1, 8, 3, 50)
 	player.AddItem("Potion de vie")
 	player.AddItem("Potion de vie")
 
@@ -23,19 +59,14 @@ func main() {
 	}
 	w.BonusBoss.Zone = "Zone Bonus - Le Disque de Pucci"
 
-	fmt.Println("Bienvenue,", player.Name, "!")
-	fmt.Println("Appuie sur Entrée pour ouvrir la carte...")
-	combat.WaitEnter()
-
 	for {
-		zone := combat.SelectZone(w)
+		zone := ui.SelectZone(w)
 		if zone == nil {
-			fmt.Println("\nÀ bientôt !")
 			return
 		}
 
 		if zone.IsShop {
-			combat.RunShop(player)
+			boutique.RunShop(player)
 			continue
 		}
 
@@ -43,42 +74,36 @@ func main() {
 			zone.Boss.LP = zone.Boss.MaxLP
 		}
 
-		result := combat.RunBattle(player, zone.Boss)
-		switch result {
+		switch combat.RunBattle(player, zone.Boss) {
 		case combat.ResultVictory, combat.ResultSpared:
 			if !zone.IsFarm {
 				zone.Cleared = true
 			}
 			gain := zone.Boss.FragmentReward
 			player.Fragment += gain
-			fmt.Printf("\nTu gagnes %d Fragments ! (Total : %d)\n", gain, player.Fragment)
+			fmt.Fprintf(ui.Out, "\nTu gagnes %d Fragments ! (Total : %d)\n", gain, player.Fragment)
 			for _, msg := range player.GainXP(zone.Boss.XPReward) {
-				fmt.Println(msg)
+				fmt.Fprintln(ui.Out, msg)
 			}
-			fmt.Println("Appuie sur Entrée pour continuer...")
-			combat.WaitEnter()
+			pause("")
 		case combat.ResultDefeat:
-			fmt.Println("\nGame Over.")
+			pause("\nGame Over.")
 			return
 		case combat.ResultQuit:
-			fmt.Println("\nÀ bientôt !")
 			return
 		}
 
-		if w.AllCleared() {
-			if combat.ConfirmBonusBoss(w.BonusBoss.Name) {
-				result := combat.RunBattle(player, w.BonusBoss)
-				switch result {
-				case combat.ResultVictory, combat.ResultSpared:
-					for _, msg := range player.GainXP(w.BonusBoss.XPReward) {
-						fmt.Println(msg)
-					}
-					fmt.Println("\nFélicitations, tu as terminé le jeu !")
-				case combat.ResultDefeat:
-					fmt.Println("\nGame Over.")
+		if w.AllCleared() && ui.ConfirmBonusBoss(w.BonusBoss.Name) {
+			switch combat.RunBattle(player, w.BonusBoss) {
+			case combat.ResultVictory, combat.ResultSpared:
+				for _, msg := range player.GainXP(w.BonusBoss.XPReward) {
+					fmt.Fprintln(ui.Out, msg)
 				}
-				return
+				pause(fmt.Sprintf("\nFélicitations %s, tu as terminé le jeu !", player.Name))
+			case combat.ResultDefeat:
+				pause("\nGame Over.")
 			}
+			return
 		}
 	}
 }
